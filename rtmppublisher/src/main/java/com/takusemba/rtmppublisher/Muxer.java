@@ -129,6 +129,6 @@ class Muxer {
     }
 
     boolean isConnected() {
-        return rtmpMuxer.isConnected();
+        return rtmpMuxer.isConnected() == 1;
     }
 }
