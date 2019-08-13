@@ -52,7 +52,7 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
  * Method:    playWithUrl
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_playWithUrl
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_playWithUrl
   (JNIEnv *, jobject, jstring);
 
 /*

@@ -1,5 +1,6 @@
 package com.takusemba.rtmppublishersample
 
+import android.media.MediaExtractor
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.os.Handler
@@ -7,12 +8,12 @@ import android.support.v7.app.AppCompatActivity
 import android.view.Gravity
 import android.view.View
 import android.widget.*
-import com.takusemba.rtmppublisher.Publisher
 import com.takusemba.rtmppublisher.PublisherListener
+import com.takusemba.rtmppublisher.Puller
 
 class PlayerActivity : AppCompatActivity(), PublisherListener {
 
-    private lateinit var publisher: Publisher
+    private lateinit var puller: Puller
     private lateinit var glView: GLSurfaceView
     private lateinit var container: RelativeLayout
     private lateinit var pullButton: Button
@@ -35,36 +36,27 @@ class PlayerActivity : AppCompatActivity(), PublisherListener {
         cameraButton = findViewById(R.id.toggle_camera)
         label = findViewById(R.id.live_label)
 
-
         if (url.isBlank()) {
             Toast.makeText(this, R.string.error_empty_url, Toast.LENGTH_SHORT)
                     .apply { setGravity(Gravity.CENTER, 0, 0) }
                     .run { show() }
         } else {
-            publisher = Publisher.Builder(this)
-                    .setGlView(glView)
+            puller = Puller.Builder(this)
                     .setUrl(url)
-                    .setSize(Publisher.Builder.DEFAULT_WIDTH, Publisher.Builder.DEFAULT_HEIGHT)
-                    .setAudioBitrate(Publisher.Builder.DEFAULT_AUDIO_BITRATE)
-                    .setVideoBitrate(Publisher.Builder.DEFAULT_VIDEO_BITRATE)
-                    .setCameraMode(Publisher.Builder.DEFAULT_MODE)
+                    .setAudioBitrate(Puller.Builder.DEFAULT_AUDIO_BITRATE)
                     .setListener(this)
                     .build()
 
             pullButton.setOnClickListener {
-                if (publisher.isPublishing) {
-                    publisher.stopPublishing()
+                if (puller.isPulling) {
+                    puller.stopPulling()
                 } else {
-                    publisher.startPublishing()
+                    puller.startPulling()
                 }
             }
 
             backButton.setOnClickListener {
                 finish();
-            }
-
-            cameraButton.setOnClickListener {
-                publisher.switchCamera()
             }
         }
     }
@@ -109,7 +101,7 @@ class PlayerActivity : AppCompatActivity(), PublisherListener {
     }
 
     private fun updateControls() {
-        pullButton.text = getString(if (publisher.isPublishing) R.string.stop_publishing else R.string.start_publishing)
+        pullButton.text = getString(if (puller.isPulling) R.string.stop_pull else R.string.start_pull)
     }
 
     private fun startCounting() {

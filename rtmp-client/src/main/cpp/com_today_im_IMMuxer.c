@@ -59,8 +59,16 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
     return result;
 }
 
-JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_playWithUrl
-        (JNIEnv *, jobject, jstring);
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_playWithUrl
+        (JNIEnv *env, jobject instance, jstring rtmpURL) {
+    char *url = (*env)->GetStringUTFChars(env, rtmpURL, 0);
+
+    int result = startPublishWithUrl(url);
+
+    (*env)->ReleaseStringUTFChars(env, rtmpURL, url);
+
+    return result;
+}
 
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_replayWithUrl
         (JNIEnv *, jobject, jstring);
@@ -80,6 +88,9 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
 JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
         (JNIEnv *env, jobject instance) {
     RTMPPacket packet = read();
+    if (packet.m_body == NULL) {
+        return NULL;
+    }
 
     jclass objectClass = (*env)->FindClass(env, "com/today/im/PacketInfo");
 
@@ -87,7 +98,7 @@ JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
 
     jobject result = (*env)->NewObject(env, objectClass, packet.m_headerType, packet.m_packetType,
                                        packet.m_hasAbsTimestamp, packet.m_nTimeStamp,
-                                       packet.m_nInfoField2, packet.m_nBodySize);
+                                       packet.m_nInfoField2, packet.m_nBodySize, byteA);
 
     return result;
 }
