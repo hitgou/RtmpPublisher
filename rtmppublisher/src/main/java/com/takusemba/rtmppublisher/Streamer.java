@@ -2,12 +2,15 @@ package com.takusemba.rtmppublisher;
 
 import android.opengl.EGLContext;
 
+import com.today.im.IMMuxer;
+
 class Streamer
         implements VideoHandler.OnVideoEncoderStateListener, AudioHandler.OnAudioEncoderStateListener {
 
     private VideoHandler videoHandler;
     private AudioHandler audioHandler;
     private Muxer muxer = new Muxer();
+    private IMMuxer imMuxer = new IMMuxer();
 
     Streamer() {
         this.videoHandler = new VideoHandler();
@@ -20,7 +23,7 @@ class Streamer
 
     void startStreaming(EGLContext context, int width, int height, int audioBitrate,
                         int videoBitrate) {
-        if (muxer.isConnected()) {
+        if (imMuxer.isConnected() == 1) {
             long startStreamingAt = System.currentTimeMillis();
             videoHandler.setOnVideoEncoderStateListener(this);
             audioHandler.setOnAudioEncoderStateListener(this);
@@ -36,7 +39,7 @@ class Streamer
     }
 
     boolean isStreaming() {
-        return muxer.isConnected();
+        return imMuxer.isConnected() == 1;
     }
 
     @Override

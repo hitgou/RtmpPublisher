@@ -12,4 +12,9 @@
 
     <string name="publishing_label">LIVE  %1$s:%2$s</string>
 
+    <string name="go_pull">Go Pull</string>
+    <string name="start_pull">Start Pull</string>
+    <string name="stop_pull">Stop Pull</string>
+
+    <string name="back">返回</string>
 </resources>

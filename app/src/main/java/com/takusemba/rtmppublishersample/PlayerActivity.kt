@@ -1,6 +1,5 @@
 package com.takusemba.rtmppublishersample
 
-import android.content.Intent
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.os.Handler
@@ -11,13 +10,13 @@ import android.widget.*
 import com.takusemba.rtmppublisher.Publisher
 import com.takusemba.rtmppublisher.PublisherListener
 
-class MainActivity : AppCompatActivity(), PublisherListener {
+class PlayerActivity : AppCompatActivity(), PublisherListener {
 
     private lateinit var publisher: Publisher
     private lateinit var glView: GLSurfaceView
     private lateinit var container: RelativeLayout
-    private lateinit var publishButton: Button
-    private lateinit var goPullButton: Button
+    private lateinit var pullButton: Button
+    private lateinit var backButton: Button
     private lateinit var cameraButton: ImageView
     private lateinit var label: TextView
 
@@ -28,13 +27,14 @@ class MainActivity : AppCompatActivity(), PublisherListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_player)
         glView = findViewById(R.id.surface_view)
         container = findViewById(R.id.container)
-        publishButton = findViewById(R.id.toggle_publish)
-        goPullButton = findViewById(R.id.toggle_go_pull)
+        pullButton = findViewById(R.id.toggle_pull)
+        backButton = findViewById(R.id.toggle_back)
         cameraButton = findViewById(R.id.toggle_camera)
         label = findViewById(R.id.live_label)
+
 
         if (url.isBlank()) {
             Toast.makeText(this, R.string.error_empty_url, Toast.LENGTH_SHORT)
@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity(), PublisherListener {
                     .setListener(this)
                     .build()
 
-            publishButton.setOnClickListener {
+            pullButton.setOnClickListener {
                 if (publisher.isPublishing) {
                     publisher.stopPublishing()
                 } else {
@@ -59,9 +59,8 @@ class MainActivity : AppCompatActivity(), PublisherListener {
                 }
             }
 
-            goPullButton.setOnClickListener {
-                val intent = Intent(this@MainActivity, PlayerActivity::class.java)
-                startActivity(intent)
+            backButton.setOnClickListener {
+                finish();
             }
 
             cameraButton.setOnClickListener {
@@ -110,7 +109,7 @@ class MainActivity : AppCompatActivity(), PublisherListener {
     }
 
     private fun updateControls() {
-        publishButton.text = getString(if (publisher.isPublishing) R.string.stop_publishing else R.string.start_publishing)
+        pullButton.text = getString(if (publisher.isPublishing) R.string.stop_publishing else R.string.start_publishing)
     }
 
     private fun startCounting() {

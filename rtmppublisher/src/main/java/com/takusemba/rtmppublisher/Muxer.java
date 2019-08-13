@@ -5,6 +5,8 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 
+import com.today.im.IMMuxer;
+
 import net.butterflytv.rtmp_client.RTMPMuxer;
 
 class Muxer {
@@ -17,6 +19,7 @@ class Muxer {
     private Handler handler;
 
     private RTMPMuxer rtmpMuxer = new RTMPMuxer();
+    private IMMuxer imMuxer = new IMMuxer();
     private PublisherListener listener;
 
     private boolean disconnected = false;
@@ -35,7 +38,8 @@ class Muxer {
             public boolean handleMessage(Message msg) {
                 switch (msg.what) {
                     case MSG_OPEN:
-                        rtmpMuxer.open((String) msg.obj, msg.arg1, msg.arg2);
+                        imMuxer.startPublishWithUrl((String) msg.obj);
+//                        rtmpMuxer.open((String) msg.obj, msg.arg1, msg.arg2);
                         if (listener != null) {
                             uiHandler.post(new Runnable() {
                                 @Override
@@ -52,7 +56,8 @@ class Muxer {
                         }
                         break;
                     case MSG_CLOSE:
-                        rtmpMuxer.close();
+                        imMuxer.stopPublish();
+//                        rtmpMuxer.close();
                         if (listener != null) {
                             uiHandler.post(new Runnable() {
                                 @Override
@@ -65,7 +70,7 @@ class Muxer {
                         break;
                     case MSG_SEND_VIDEO: {
                         if (isConnected()) {
-                            rtmpMuxer.writeVideo((byte[]) msg.obj, 0, msg.arg1, msg.arg2);
+//                            rtmpMuxer.writeVideo((byte[]) msg.obj, 0, msg.arg1, msg.arg2);
                         } else {
                             if (listener != null) {
                                 uiHandler.post(new Runnable() {
@@ -82,7 +87,9 @@ class Muxer {
                     }
                     case MSG_SEND_AUDIO: {
                         if (isConnected()) {
-                            rtmpMuxer.writeAudio((byte[]) msg.obj, 0, msg.arg1, msg.arg2);
+                            int type = MSG_SEND_AUDIO;
+                            imMuxer.write((byte[]) msg.obj, type, msg.arg1, msg.arg2);
+//                            rtmpMuxer.writeAudio((byte[]) msg.obj, 0, msg.arg1, msg.arg2);
                         } else {
                             if (listener != null) {
                                 uiHandler.post(new Runnable() {
@@ -129,6 +136,6 @@ class Muxer {
     }
 
     boolean isConnected() {
-        return rtmpMuxer.isConnected() == 1;
+        return imMuxer.isConnected() == 1;
     }
 }

@@ -19,6 +19,8 @@ add_library( # Sets the name of the library.
 
              # Provides a relative path to your source file(s).
              src/main/cpp/rtmpmuxer.c
+             src/main/cpp/com_today_im_IMMuxer.c
+             src/main/cpp/com_today_im_IMMuxer.h
              src/main/cpp/librtmp-jni.h
              src/main/cpp/librtmp-jni.c
              src/main/cpp/librtmp/amf.c
@@ -36,7 +38,10 @@ add_library( # Sets the name of the library.
              src/main/cpp/librtmp/rtmp.h
              src/main/cpp/librtmp/rtmp_sys.h
              src/main/cpp/flvmuxer/xiecc_rtmp.c
-             src/main/cpp/flvmuxer/xiecc_rtmp.h)
+             src/main/cpp/flvmuxer/xiecc_rtmp.h
+             src/main/cpp/flvmuxer/today_rtmp.c
+             src/main/cpp/flvmuxer/today_rtmp.h
+        )
 
 include_directories(src/main/cpp/librtmp)
 
