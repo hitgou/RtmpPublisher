@@ -63,7 +63,7 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_playWithUrl
         (JNIEnv *env, jobject instance, jstring rtmpURL) {
     char *url = (*env)->GetStringUTFChars(env, rtmpURL, 0);
 
-    int result = startPublishWithUrl(url);
+    int result = playerWithUrl(url);
 
     (*env)->ReleaseStringUTFChars(env, rtmpURL, url);
 
@@ -87,18 +87,30 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
 
 JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
         (JNIEnv *env, jobject instance) {
+    jclass objectClass = (*env)->FindClass(env, "com/today/im/PacketInfo");
+    if (objectClass == NULL) {
+        return NULL;
+    }
+
     RTMPPacket packet = read();
     if (packet.m_body == NULL) {
         return NULL;
     }
 
-    jclass objectClass = (*env)->FindClass(env, "com/today/im/PacketInfo");
-
     jbyteArray byteA = (*env)->NewByteArray(env, packet.m_nBodySize);
+    (*env)->SetByteArrayRegion(env, byteA, 0, packet.m_nBodySize, packet.m_body);
 
-    jobject result = (*env)->NewObject(env, objectClass, packet.m_headerType, packet.m_packetType,
-                                       packet.m_hasAbsTimestamp, packet.m_nTimeStamp,
-                                       packet.m_nInfoField2, packet.m_nBodySize, byteA);
+    jmethodID constructor = (*env)->GetMethodID(env, objectClass, "<init>", "(IIIIII[B)V");
+
+    jobject result = (*env)->NewObject(env, objectClass, constructor, packet.m_headerType,
+                                       packet.m_packetType, packet.m_hasAbsTimestamp,
+                                       packet.m_nTimeStamp, packet.m_nInfoField2,
+                                       packet.m_nBodySize, byteA);
+
+//    (*env)->ReleaseByteArrayElements(env, byteA, packet.m_body, 0);
+    (*env)->DeleteLocalRef(env, objectClass);
+//    (*env)->DeleteLocalRef(env, byteA);
+    (*env)->DeleteLocalRef(env, constructor);
 
     return result;
 }

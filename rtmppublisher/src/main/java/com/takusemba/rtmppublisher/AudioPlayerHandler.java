@@ -4,6 +4,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
@@ -55,7 +56,6 @@ public class AudioPlayerHandler implements Runnable {
         new Thread(this).start();
     }
 
-
     /**
      * 播放，当有新数据传入时，
      *
@@ -68,7 +68,8 @@ public class AudioPlayerHandler implements Runnable {
             return;
         }
         try {
-            dataQueue.putLast(data);
+            byte[] newData = Arrays.copyOfRange(data, 1, data.length - 1);
+            dataQueue.putLast(newData);
             semaphore.release();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -116,6 +117,8 @@ public class AudioPlayerHandler implements Runnable {
             }
             if (dataQueue.size() > 0) {
                 byte[] data = (byte[]) dataQueue.pollFirst();
+
+
                 track.write(data, 0, data.length);
             } else {
                 try {

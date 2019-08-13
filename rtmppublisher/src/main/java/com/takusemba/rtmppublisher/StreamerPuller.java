@@ -26,6 +26,7 @@ class StreamerPuller {
     }
 
     void stopStreaming() {
+        isPlaying = false;
         audioHandler.stop();
         imMuxer.stopPlay();
         imMuxer.stopPull();
@@ -53,6 +54,7 @@ class StreamerPuller {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+                        continue;
                     }
                     audioPlayerHandler.onPlaying(packet.body, 0, packet.body.length);
                 }

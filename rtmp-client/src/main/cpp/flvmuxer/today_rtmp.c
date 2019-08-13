@@ -112,9 +112,16 @@ int write(char *buf, int type, int buflen, uint64_t timestamp) {
     return (ret > 0) ? 0 : -1;
 }
 
-int playerWithUrl(char *rtmpURL) {
+int playerWithUrl(char *url) {
     pPlayRtmp = RTMP_Alloc();
+    if (pPlayRtmp == NULL) {
+        return -1;
+    }
+
     RTMP_Init(pPlayRtmp);
+
+    int ret = RTMP_SetupURL(pPlayRtmp, url);
+
 
     if (!RTMP_Connect(pPlayRtmp, NULL) || !RTMP_ConnectStream(pPlayRtmp, 0)) {
         return -1;
@@ -123,13 +130,12 @@ int playerWithUrl(char *rtmpURL) {
     RTMP_SetBufferMS(pPlayRtmp, 100);
     RTMP_UpdateBufferMS(pPlayRtmp);
 
-    RTMPPacket rtmp_pakt = {0};
     isPulling = true;
 
     return 1;
 }
 
-int replayWithUrl(char *rtmpURL) {
+int replayWithUrl(char *url) {
     return 1;
 }
 

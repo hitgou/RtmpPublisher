@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 import com.today.im.IMMuxer;
 
@@ -90,7 +91,8 @@ class Muxer {
                     case MSG_SEND_AUDIO: {
                         if (isConnected()) {
                             int type = MSG_SEND_AUDIO;
-                            imMuxer.write((byte[]) msg.obj, type, msg.arg1, msg.arg2);
+                            int result = imMuxer.write((byte[]) msg.obj, type, msg.arg1, msg.arg2);
+                            Log.d("result", "result is " + result);
 //                            rtmpMuxer.writeAudio((byte[]) msg.obj, 0, msg.arg1, msg.arg2);
                         } else {
                             if (listener != null) {
