@@ -91,7 +91,7 @@ class AudioEncoder implements Encoder {
             if (bufferRemaining < length) {
                 inputBuf.put(data, 0, bufferRemaining);
             } else {
-                inputBuf.put(data, 0, length);
+                inputBuf.put(data, 0, data.length);
             }
             encoder.queueInputBuffer(inputBufferId, 0, inputBuf.position(), timestamp * 1000, 0);
         }

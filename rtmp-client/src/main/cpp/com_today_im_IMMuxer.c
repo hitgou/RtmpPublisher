@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <malloc.h>
 #include <rtmp.h>
+#include <string.h>
 
 #include "flvmuxer/today_rtmp.h"
 #include "com_today_im_IMMuxer.h"

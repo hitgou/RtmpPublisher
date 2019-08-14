@@ -5,6 +5,8 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.util.Log;
 
+import com.today.im.opus.OpusUtils;
+
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
@@ -111,15 +113,23 @@ public class AudioPlayerHandler implements Runnable {
 
     @Override
     public void run() {
+        final OpusUtils opusUtils = new OpusUtils();
+        final Long createDecoder = opusUtils.createDecoder(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN_OPUS);
+        byte[] bufferArray = new byte[80];
+
         while (true) {
             if (release) {
                 return;
             }
             if (dataQueue.size() > 0) {
                 byte[] data = (byte[]) dataQueue.pollFirst();
-
-
-                track.write(data, 0, data.length);
+                short[] decodeBufferArray = new short[bufferArray.length * 4];
+                int size = opusUtils.decode(createDecoder, data, decodeBufferArray);
+                if (size > 0) {
+                    short[] decodeArray = new short[size];
+                    System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
+                    track.write(decodeArray, 0, decodeArray.length);
+                }
             } else {
                 try {
                     semaphore.acquire();
