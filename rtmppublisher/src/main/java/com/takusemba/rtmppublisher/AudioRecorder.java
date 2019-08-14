@@ -5,8 +5,14 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 
 class AudioRecorder {
+    private final static String TAG = "AudioRecorder";
+    public static final int SAMPLE_RATE = 16000;
+    public static final int CHANEL_IN = AudioFormat.CHANNEL_IN_MONO;
+    public static final int CHANEL_OUT = AudioFormat.CHANNEL_OUT_MONO;
+    public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_8BIT;
 
     private AudioRecord audioRecord;
     private final int sampleRate;
@@ -25,29 +31,33 @@ class AudioRecorder {
     }
 
     public void start() {
-        final int bufferSize =
-                AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                        AudioFormat.ENCODING_PCM_16BIT);
+        try {
+            final int bufferSize = AudioRecord.getMinBufferSize(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN, AudioRecorder.AUDIO_FORMAT);
 
-        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+            audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, AudioRecorder.CHANEL_IN, AudioRecorder.AUDIO_FORMAT, bufferSize);
 
-        audioRecord.startRecording();
+            audioRecord.startRecording();
 
-        HandlerThread handlerThread = new HandlerThread("AudioRecorder-record");
-        handlerThread.start();
-        Handler handler = new Handler(handlerThread.getLooper());
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                int bufferReadResult;
-                byte[] data = new byte[bufferSize];
-                // keep running... so use a different thread.
-                while (isRecording() && (bufferReadResult = audioRecord.read(data, 0, bufferSize)) > 0) {
-                    listener.onAudioRecorded(data, bufferReadResult);
+            HandlerThread handlerThread = new HandlerThread("AudioRecorder-record");
+            handlerThread.start();
+            Handler handler = new Handler(handlerThread.getLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    int bufferReadResult;
+                    byte[] data = new byte[bufferSize];
+                    // keep running... so use a different thread.
+                    while (isRecording() && (bufferReadResult = audioRecord.read(data, 0, bufferSize)) > 0) {
+                        Log.d(TAG, "消息采样包：size=" + data.length);
+                        listener.onAudioRecorded(data, bufferReadResult);
+                    }
                 }
-            }
-        });
+            });
+
+        } catch (Exception e) {
+            Log.e(TAG, "启动播放出错", e);
+            e.printStackTrace();
+        }
     }
 
     void stop() {

@@ -5,8 +5,6 @@ import android.os.HandlerThread;
 
 class AudioHandler implements AudioRecorder.OnAudioRecorderStateChangedListener {
 
-    private static final int SAMPLE_RATE = 44100;
-
     /**
      * note that to use {@link AudioEncoder} and {@link AudioRecorder} from handler
      */
@@ -24,7 +22,7 @@ class AudioHandler implements AudioRecorder.OnAudioRecorderStateChangedListener 
 
     AudioHandler() {
         audioEncoder = new AudioEncoder();
-        audioRecorder = new AudioRecorder(SAMPLE_RATE);
+        audioRecorder = new AudioRecorder(AudioRecorder.SAMPLE_RATE);
         audioRecorder.setOnAudioRecorderStateChangedListener(this);
 
         HandlerThread handlerThread = new HandlerThread("VideoHandler");
@@ -36,7 +34,7 @@ class AudioHandler implements AudioRecorder.OnAudioRecorderStateChangedListener 
         handler.post(new Runnable() {
             @Override
             public void run() {
-                audioEncoder.prepare(bitrate, SAMPLE_RATE, startStreamingAt);
+                audioEncoder.prepare(bitrate, AudioRecorder.SAMPLE_RATE, startStreamingAt);
                 audioEncoder.start();
                 audioRecorder.start();
             }

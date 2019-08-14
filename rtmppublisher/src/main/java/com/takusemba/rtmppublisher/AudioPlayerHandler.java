@@ -1,8 +1,9 @@
 package com.takusemba.rtmppublisher;
 
-import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.util.Log;
 
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -22,12 +23,9 @@ import java.util.concurrent.Semaphore;
  * @author
  */
 public class AudioPlayerHandler implements Runnable {
-
+    private final static String TAG = "AudioPlayerHandler";
     private AudioTrack track = null;// 录音文件播放对象
     private boolean isPlaying = false;// 标记是否正在录音中
-    private int frequence = 8000;// 采样率 8000
-    private int channelInConfig = AudioFormat.CHANNEL_OUT_MONO;// 定义采样为双声道（过时，但是使用其他的又不行
-    private int audioEncoding = AudioFormat.ENCODING_PCM_16BIT;// 定义音频编码（16位）
     private int bufferSize = -1;// 播放缓冲大小
     private LinkedBlockingDeque<Object> dataQueue = new LinkedBlockingDeque<>();
     // 互斥信号量
@@ -36,24 +34,25 @@ public class AudioPlayerHandler implements Runnable {
     private boolean release = false;
 
     public AudioPlayerHandler() {
-        // 获取缓冲 大小
-        bufferSize = AudioTrack.getMinBufferSize(frequence, channelInConfig,
-                audioEncoding);
-
-        // 实例AudioTrack
-        track = new AudioTrack(AudioManager.STREAM_MUSIC, frequence,
-                channelInConfig, audioEncoding, bufferSize,
-                AudioTrack.MODE_STREAM);
-        track.setStereoVolume(AudioTrack.getMaxVolume(),
-                AudioTrack.getMaxVolume());
         try {
+            // 获取缓冲 大小
+            bufferSize = AudioTrack.getMinBufferSize(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_OUT,
+                    AudioRecorder.AUDIO_FORMAT);
+
+            // 实例AudioTrack
+            track = new AudioTrack(AudioManager.STREAM_VOICE_CALL, AudioRecorder.SAMPLE_RATE,
+                    AudioRecorder.CHANEL_OUT, AudioRecorder.AUDIO_FORMAT, bufferSize,
+                    AudioTrack.MODE_STREAM);
+            track.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume());
             // 默认需要抢占一个信号量。防止播放进程执行
             semaphore.acquire();
-        } catch (InterruptedException e) {
+
+            // 开启播放线程
+            new Thread(this).start();
+        } catch (Exception e) {
+            Log.e(TAG, "启动播放出错", e);
             e.printStackTrace();
         }
-        // 开启播放线程
-        new Thread(this).start();
     }
 
     /**
@@ -72,6 +71,7 @@ public class AudioPlayerHandler implements Runnable {
             dataQueue.putLast(newData);
             semaphore.release();
         } catch (InterruptedException e) {
+            Log.e(TAG, "启动播放出错", e);
             e.printStackTrace();
         }
     }
@@ -124,6 +124,7 @@ public class AudioPlayerHandler implements Runnable {
                 try {
                     semaphore.acquire();
                 } catch (InterruptedException e) {
+                    Log.e(TAG, "启动播放出错", e);
                     e.printStackTrace();
                 }
             }

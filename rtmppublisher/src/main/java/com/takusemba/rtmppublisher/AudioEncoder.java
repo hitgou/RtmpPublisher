@@ -7,11 +7,13 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 class AudioEncoder implements Encoder {
+    private final static String TAG = "AudioEncoder";
 
     private final int TIMEOUT_USEC = 10000;
 
@@ -116,6 +118,7 @@ class AudioEncoder implements Encoder {
                         if (encodedData == null) {
                             continue;
                         }
+                        Log.d(TAG, "发送消息包：size=" + bufferInfo.size);
 
                         encodedData.position(bufferInfo.offset);
                         encodedData.limit(bufferInfo.offset + bufferInfo.size);

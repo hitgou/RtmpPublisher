@@ -2,11 +2,13 @@ package com.takusemba.rtmppublisher;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 
 import com.today.im.IMMuxer;
 import com.today.im.PacketInfo;
 
 class StreamerPuller {
+    private final static String TAG = "StreamerPuller";
 
     private AudioHandler audioHandler;
     private IMMuxer imMuxer = new IMMuxer();
@@ -56,6 +58,7 @@ class StreamerPuller {
                         }
                         continue;
                     }
+                    Log.d(TAG, "接收到消息包：size=" + packet.bodySize);
                     audioPlayerHandler.onPlaying(packet.body, 0, packet.body.length);
                 }
                 release();

@@ -87,13 +87,13 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
 
 JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
         (JNIEnv *env, jobject instance) {
-    jclass objectClass = (*env)->FindClass(env, "com/today/im/PacketInfo");
-    if (objectClass == NULL) {
+    RTMPPacket packet = read();
+    if (packet.m_body == NULL) {
         return NULL;
     }
 
-    RTMPPacket packet = read();
-    if (packet.m_body == NULL) {
+    jclass objectClass = (*env)->FindClass(env, "com/today/im/PacketInfo");
+    if (objectClass == NULL) {
         return NULL;
     }
 
@@ -109,8 +109,9 @@ JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
 
 //    (*env)->ReleaseByteArrayElements(env, byteA, packet.m_body, 0);
     (*env)->DeleteLocalRef(env, objectClass);
+    (*env)->DeleteLocalRef(env, byteA);
 //    (*env)->DeleteLocalRef(env, byteA);
-    (*env)->DeleteLocalRef(env, constructor);
+//    (*env)->DeleteLocalRef(env, constructor);
 
     return result;
 }
