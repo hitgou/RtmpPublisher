@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.today.im.IMMuxer;
 import com.today.im.opus.OpusUtils;
+import com.today.im.opus.Uilts;
 
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -114,15 +115,15 @@ public class PublisherTask {
             if (curShortSize > 0 && curShortSize <= audioBuffer.length) {
                 try {
                     byte[] byteArray = new byte[bufferSize / 8]; //编码后大小减小8倍
-//                    int encodeSize = opusUtils.encode(createEncoder, Uilts.INSTANCE.byteArrayToShortArray(audioBuffer), 0, byteArray);
-//                    if (encodeSize > 0) {
-//                        byte[] decodeArray = new byte[encodeSize];
-//                        System.arraycopy(byteArray, 0, decodeArray, 0, encodeSize);
-//                        dataQueue.push(decodeArray);
-//                    Log.d(TAG, "消息采样包：size=" + decodeArray.length + ", 队列 size =" + dataQueue.size());
-                    dataQueue.push(audioBuffer);
+                    int encodeSize = opusUtils.encode(createEncoder, Uilts.INSTANCE.byteArrayToShortArray(audioBuffer), 0, byteArray);
+                    if (encodeSize > 0) {
+                        byte[] decodeArray = new byte[encodeSize];
+                        System.arraycopy(byteArray, 0, decodeArray, 0, encodeSize);
+                        dataQueue.push(decodeArray);
+                        Log.d(TAG, "消息采样包：size=" + decodeArray.length + ", 队列 size =" + dataQueue.size());
+//                    dataQueue.push(audioBuffer);
 //                    } else {
-//                    }
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "启动发送出错", e);
                     e.printStackTrace();
@@ -146,7 +147,7 @@ public class PublisherTask {
                     Log.d(TAG, "result is " + result);
                     this.stop();
                 }
-            } else { 
+            } else {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {

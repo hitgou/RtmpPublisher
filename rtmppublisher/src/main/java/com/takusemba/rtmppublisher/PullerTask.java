@@ -135,7 +135,7 @@ public class PullerTask {
         final OpusUtils opusUtils = new OpusUtils();
         final Long createDecoder = opusUtils.createDecoder(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN_OPUS);
 
-        File file = new File(AudioRecorder.recorderPcmFilePath);
+        File file = new File(AudioRecorder.recorderFilePath);
         File fileDir = file.getParentFile();
         if (!fileDir.exists()) {
             fileDir.mkdirs();
@@ -153,14 +153,14 @@ public class PullerTask {
                 byte[] data = dataQueue.poll();
                 if (data != null) {
                     fileOpusBufferedOutputStream.write(data);//写入OPUS
-//                short[] decodeBufferArray = new short[640];
-//                int size = opusUtils.decode(createDecoder, data, decodeBufferArray);
-//                if (size > 0) {
-//                    short[] decodeArray = new short[size];
-//                    System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
-//                    audioTrack.write(decodeArray, 0, decodeArray.length);
-//                }
-                    audioTrack.write(data, 0, data.length);
+                    short[] decodeBufferArray = new short[640];
+                    int size = opusUtils.decode(createDecoder, data, decodeBufferArray);
+                    if (size > 0) {
+                        short[] decodeArray = new short[size];
+                        System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
+                        audioTrack.write(decodeArray, 0, decodeArray.length);
+                    }
+//                    audioTrack.write(data, 0, data.length);
                 } else {
                     try {
                         Thread.sleep(100);

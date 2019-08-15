@@ -35,6 +35,8 @@ class PublishPullActivity : AppCompatActivity(), PublisherListener {
         publishButton = findViewById(R.id.toggle_publish)
         pullButton = findViewById(R.id.toggle_go_pull)
         tvLog = findViewById(R.id.tv_log)
+        findViewById<TextView>(R.id.tv_url_publish).setText(url);
+        findViewById<TextView>(R.id.tv_url_pull).setText(url);
 
         audioManager = getSystemService(AudioManager::class.java)
 
