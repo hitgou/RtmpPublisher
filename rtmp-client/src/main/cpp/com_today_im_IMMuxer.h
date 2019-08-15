@@ -25,10 +25,10 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
 
 /*
  * Class:     com_today_im_IMMuxer
- * Method:    startPublishWithUrl
+ * Method:    publishWithUrl
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_startPublishWithUrl
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_publishWithUrl
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -49,10 +49,10 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
 
 /*
  * Class:     com_today_im_IMMuxer
- * Method:    playWithUrl
+ * Method:    pullWithUrl
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_playWithUrl
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_pullWithUrl
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -81,7 +81,7 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_startPlay
 
 /*
  * Class:     com_today_im_IMMuxer
- * Method:    stopPlay
+ * Method:    stopPull
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPlay

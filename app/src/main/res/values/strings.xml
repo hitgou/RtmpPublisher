@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">RtmpPublisher</string>
 
-    <string name="start_publishing">Start Publishing</string>
-    <string name="stop_publishing">Stop Publishing</string>
+    <string name="start_publishing">Publish</string>
+    <string name="stop_publishing">Stop</string>
     <string name="started_publishing">Publishing Started</string>
     <string name="stopped_publishing">Publishing Stopped</string>
     <string name="disconnected_publishing">Publishing Disconnected</string>
@@ -13,8 +13,13 @@
     <string name="publishing_label">LIVE  %1$s:%2$s</string>
 
     <string name="go_pull">Go Pull</string>
-    <string name="start_pull">Start Pull</string>
-    <string name="stop_pull">Stop Pull</string>
+    <string name="start_pull">Pull</string>
+    <string name="stop_pull">Stop</string>
 
     <string name="back">返回</string>
+
+    <string name="url_publish">rtmp://47.106.33.6:9935/test/wxy</string>
+    <string name="url_pull">rtmp://47.106.33.6:9935/test/wxy</string>
+
+
 </resources>

@@ -24,7 +24,7 @@ class AudioRecorder {
     public static final int SAMPLE_RATE = 16000;
     public static final int CHANEL_IN = AudioFormat.CHANNEL_IN_MONO;
     public static final int CHANEL_IN_OPUS = 1;
-    public static final int CHANEL_OUT = AudioFormat.CHANNEL_OUT_MONO;
+    public static final int CHANNEL_OUT_MONO = AudioFormat.CHANNEL_OUT_MONO;
 
     public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
 

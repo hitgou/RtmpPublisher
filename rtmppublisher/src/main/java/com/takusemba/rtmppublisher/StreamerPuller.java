@@ -16,7 +16,7 @@ class StreamerPuller {
     private IMMuxer imMuxer = new IMMuxer();
     private boolean isPlaying = false;
     private PublisherListener publisherListener;
-    private  AudioManager audioManager;
+    private AudioManager audioManager;
 
     StreamerPuller(AudioManager audioManager) {
         this.audioHandler = new AudioHandler();
@@ -24,7 +24,7 @@ class StreamerPuller {
     }
 
     void open(String url) {
-        imMuxer.playWithUrl(url);
+        imMuxer.pullWithUrl(url);
     }
 
     void startStreaming(int audioBitrate) {
@@ -46,7 +46,7 @@ class StreamerPuller {
     void stopStreaming() {
         isPlaying = false;
         audioHandler.stop();
-        imMuxer.stopPlay();
+        imMuxer.stopPull();
 
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         if (publisherListener != null) {

@@ -52,14 +52,14 @@ public class AudioPlayerHandler implements Runnable {
             this.audioManager = audioManager;
             this.sessionId = audioManager.generateAudioSessionId();
             // 获取缓冲 大小
-            bufferSize = AudioTrack.getMinBufferSize(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_OUT,
+            bufferSize = AudioTrack.getMinBufferSize(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANNEL_OUT_MONO,
                     AudioRecorder.AUDIO_FORMAT);
 
             // 实例AudioTrack
 //            audioTrack = new AudioTrack(audioAttributes, audioFormat, bufferSize, AudioTrack.MODE_STREAM, sessionId);
 
             audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, AudioRecorder.SAMPLE_RATE,
-                    AudioRecorder.CHANEL_OUT, AudioRecorder.AUDIO_FORMAT, bufferSize,
+                    AudioRecorder.CHANNEL_OUT_MONO, AudioRecorder.AUDIO_FORMAT, bufferSize,
                     AudioTrack.MODE_STREAM);
 //            audioTrack.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume());
             // 默认需要抢占一个信号量。防止播放进程执行

@@ -18,17 +18,17 @@ extern "C"{
 
 void initWithSampleRate(int sampleRate, int audioEncoder);
 
-int startPublishWithUrl(char *url);
+int publishWithUrl(char *url);
 
 void stopPublish();
 
 int write(char *buf, int type, int buflen, uint64_t timestamp);
 
-int playerWithUrl(char *url);
+int pullWithUrl(char *url);
 
 int replayerWithUrl(char *url);
 
-void stopPlay();
+void stopPull();
 
 void playAudioWaitingToLong();
 

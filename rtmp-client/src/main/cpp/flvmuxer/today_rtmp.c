@@ -54,7 +54,7 @@ void initWithSampleRate(int sampleRate, int audioEncoder) {
 
 }
 
-int startPublishWithUrl(char *url) {
+int publishWithUrl(char *url) {
     rtmp = RTMP_Alloc();
     if (rtmp == NULL) {
         return -1;
@@ -112,7 +112,7 @@ int write(char *buf, int type, int buflen, uint64_t timestamp) {
     return (ret > 0) ? 0 : -1;
 }
 
-int playerWithUrl(char *url) {
+int pullWithUrl(char *url) {
     pPlayRtmp = RTMP_Alloc();
     if (pPlayRtmp == NULL) {
         return -1;
@@ -139,7 +139,7 @@ int replayWithUrl(char *url) {
     return 1;
 }
 
-void stopPlay() {
+void stopPull() {
     isPulling = false;
     if (rtmp) {
         RTMP_Close(rtmp);

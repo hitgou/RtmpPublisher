@@ -41,7 +41,7 @@ public class Muxer {
             public boolean handleMessage(Message msg) {
                 switch (msg.what) {
                     case MSG_OPEN:
-                        imMuxer.startPublishWithUrl((String) msg.obj);
+                        imMuxer.publishWithUrl((String) msg.obj);
 //                        rtmpMuxer.open((String) msg.obj, msg.arg1, msg.arg2);
                         if (listener != null) {
                             uiHandler.post(new Runnable() {

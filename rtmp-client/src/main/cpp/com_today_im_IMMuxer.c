@@ -16,11 +16,11 @@ JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_initWithSampleRate
     return NULL;
 }
 
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_startPublishWithUrl
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_publishWithUrl
         (JNIEnv *env, jobject instance, jstring rtmpURL) {
     char *url = (*env)->GetStringUTFChars(env, rtmpURL, 0);
 
-    int result = startPublishWithUrl(url);
+    int result = publishWithUrl(url);
 
     (*env)->ReleaseStringUTFChars(env, rtmpURL, url);
     return result;
@@ -60,11 +60,11 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
     return result;
 }
 
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_playWithUrl
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_pullWithUrl
         (JNIEnv *env, jobject instance, jstring rtmpURL) {
     char *url = (*env)->GetStringUTFChars(env, rtmpURL, 0);
 
-    int result = playerWithUrl(url);
+    int result = pullWithUrl(url);
 
     (*env)->ReleaseStringUTFChars(env, rtmpURL, url);
 
@@ -75,14 +75,8 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_replayWithUrl
         (JNIEnv *, jobject, jstring);
 
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPull
-        (JNIEnv *, jobject);
-
-JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_startPlay
-        (JNIEnv *, jobject);
-
-JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPlay
         (JNIEnv *env, jobject instance) {
-    stopPlay();
+    stopPull();
 }
 
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
