@@ -146,7 +146,7 @@ public class PublisherTask {
                     Log.d(TAG, "result is " + result);
                     this.stop();
                 }
-            } else {
+            } else { 
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
