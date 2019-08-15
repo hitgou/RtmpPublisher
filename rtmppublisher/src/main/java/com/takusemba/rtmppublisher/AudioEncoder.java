@@ -11,6 +11,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.LinkedBlockingDeque;
 
 class AudioEncoder implements Encoder {
     private final static String TAG = "AudioEncoder";
@@ -22,18 +23,20 @@ class AudioEncoder implements Encoder {
 
     private ByteBuffer[] inputBuffers;
     private ByteBuffer[] outputBuffers;
-    private MediaCodec encoder;
+    private MediaCodec mediaCodec;
 
     private long startedEncodingAt = 0;
     private boolean isEncoding = false;
     private AudioHandler.OnAudioEncoderStateListener listener;
+
+    private LinkedBlockingDeque<byte[]> dataQueue = new LinkedBlockingDeque<>();
 
     void setOnAudioEncoderStateListener(AudioHandler.OnAudioEncoderStateListener listener) {
         this.listener = listener;
     }
 
     /**
-     * prepare the Encoder. call this before start the encoder.
+     * prepare the Encoder. call this before start the mediaCodec.
      */
     void prepare(int bitrate, int sampleRate, long startStreamingAt) {
         int bufferSize = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
@@ -46,8 +49,8 @@ class AudioEncoder implements Encoder {
         audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, bufferSize);
         startedEncodingAt = startStreamingAt;
         try {
-            encoder = MediaCodec.createEncoderByType(AUDIO_MIME_TYPE);
-            encoder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+            mediaCodec = MediaCodec.createEncoderByType(AUDIO_MIME_TYPE);
+            mediaCodec.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         } catch (IOException | IllegalStateException e) {
             e.printStackTrace();
         }
@@ -55,9 +58,9 @@ class AudioEncoder implements Encoder {
 
     @Override
     public void start() {
-        encoder.start();
-        inputBuffers = encoder.getInputBuffers();
-        outputBuffers = encoder.getOutputBuffers();
+        mediaCodec.start();
+        inputBuffers = mediaCodec.getInputBuffers();
+        outputBuffers = mediaCodec.getOutputBuffers();
         isEncoding = true;
         drain();
     }
@@ -65,14 +68,14 @@ class AudioEncoder implements Encoder {
     @Override
     public void stop() {
         if (isEncoding) {
-            int inputBufferId = encoder.dequeueInputBuffer(TIMEOUT_USEC);
-            encoder.queueInputBuffer(inputBufferId, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+            int inputBufferId = mediaCodec.dequeueInputBuffer(TIMEOUT_USEC);
+            mediaCodec.queueInputBuffer(inputBufferId, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
         }
     }
 
     @Override
     public boolean isEncoding() {
-        return encoder != null && isEncoding;
+        return mediaCodec != null && isEncoding;
     }
 
     /**
@@ -80,21 +83,22 @@ class AudioEncoder implements Encoder {
      * the data will be drained from {@link AudioEncoder#drain()}
      */
     void enqueueData(byte[] data, int length) {
-        if (encoder == null) return;
-        int bufferRemaining;
-        long timestamp = System.currentTimeMillis() - startedEncodingAt;
-        int inputBufferId = encoder.dequeueInputBuffer(TIMEOUT_USEC);
-        if (inputBufferId >= 0) {
-            ByteBuffer inputBuf = inputBuffers[inputBufferId];
-            inputBuf.clear();
-            bufferRemaining = inputBuf.remaining();
-            if (bufferRemaining < length) {
-                inputBuf.put(data, 0, bufferRemaining);
-            } else {
-                inputBuf.put(data, 0, data.length);
-            }
-            encoder.queueInputBuffer(inputBufferId, 0, inputBuf.position(), timestamp * 1000, 0);
-        }
+        dataQueue.addLast(data);
+//        if (mediaCodec == null) return;
+//        int bufferRemaining;
+//        long timestamp = System.currentTimeMillis() - startedEncodingAt;
+//        int inputBufferId = mediaCodec.dequeueInputBuffer(TIMEOUT_USEC);
+//        if (inputBufferId >= 0) {
+//            ByteBuffer inputBuf = inputBuffers[inputBufferId];
+//            inputBuf.clear();
+//            bufferRemaining = inputBuf.remaining();
+//            if (bufferRemaining < length) {
+//                inputBuf.put(data, 0, bufferRemaining);
+//            } else {
+//                inputBuf.put(data, 0, data.length);
+//            }
+//            mediaCodec.queueInputBuffer(inputBufferId, 0, inputBuf.position(), timestamp * 1000, 0);
+//        }
     }
 
     /**
@@ -109,37 +113,47 @@ class AudioEncoder implements Encoder {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+//                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 // keep running... so use a different thread.
                 while (isEncoding) {
-                    int outputBufferId = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC);
-                    if (outputBufferId >= 0) {
-                        ByteBuffer encodedData = outputBuffers[outputBufferId];
-                        if (encodedData == null) {
-                            continue;
+                    byte[] data = dataQueue.poll();
+                    if (data == null || data.length == 0) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
-                        Log.d(TAG, "发送消息包：size=" + bufferInfo.size);
-
-                        encodedData.position(bufferInfo.offset);
-                        encodedData.limit(bufferInfo.offset + bufferInfo.size);
-
-                        byte[] data = new byte[bufferInfo.size];
-
-                        encodedData.get(data, 0, bufferInfo.size);
-                        encodedData.position(bufferInfo.offset);
-
-                        long currentTime = System.currentTimeMillis();
-                        int timestamp = (int) (currentTime - startedEncodingAt);
-                        listener.onAudioDataEncoded(data, bufferInfo.size, timestamp);
-
-                        encoder.releaseOutputBuffer(outputBufferId, false);
-                    } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                        // format should not be changed
+                        continue;
                     }
-                    if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                        //end of stream
-                        break;
-                    }
+
+//                    int outputBufferId = mediaCodec.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC);
+//                    if (outputBufferId >= 0) {
+//                        ByteBuffer encodedData = outputBuffers[outputBufferId];
+//                        if (encodedData == null) {
+//                            continue;
+//                        }
+                    Log.d(TAG, "发送消息包：size=" + data.length);
+
+//                        encodedData.position(bufferInfo.offset);
+//                        encodedData.limit(bufferInfo.offset + bufferInfo.size);
+
+//                        byte[] data = new byte[bufferInfo.size];
+
+//                        encodedData.get(data, 0, bufferInfo.size);
+//                        encodedData.position(bufferInfo.offset);
+
+                    long currentTime = System.currentTimeMillis();
+                    int timestamp = (int) (currentTime - startedEncodingAt);
+                    listener.onAudioDataEncoded(data, data.length, timestamp);
+
+//                        mediaCodec.releaseOutputBuffer(outputBufferId, false);
+//                    } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+//                        // format should not be changed
+//                    }
+//                    if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+//                        //end of stream
+//                        break;
+//                    }
                 }
                 release();
             }
@@ -147,11 +161,11 @@ class AudioEncoder implements Encoder {
     }
 
     private void release() {
-        if (encoder != null) {
+        if (mediaCodec != null) {
             isEncoding = false;
-            encoder.stop();
-            encoder.release();
-            encoder = null;
+            mediaCodec.stop();
+            mediaCodec.release();
+            mediaCodec = null;
         }
     }
 }
