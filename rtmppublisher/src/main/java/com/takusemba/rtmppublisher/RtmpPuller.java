@@ -4,6 +4,7 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.OnLifecycleEvent;
+import android.media.AudioManager;
 import android.support.v7.app.AppCompatActivity;
 
 public class RtmpPuller implements Puller, LifecycleObserver {
@@ -15,14 +16,14 @@ public class RtmpPuller implements Puller, LifecycleObserver {
     RtmpPuller(AppCompatActivity activity,
                String url,
                int audioBitrate,
-               PublisherListener publisherListener) {
+               PublisherListener publisherListener, AudioManager audioManager) {
 
         activity.getLifecycle().addObserver(this);
 
         this.url = url;
         this.audioBitrate = audioBitrate;
 
-        this.streamerPuller = new StreamerPuller();
+        this.streamerPuller = new StreamerPuller(audioManager);
         this.streamerPuller.setMuxerListener(publisherListener);
     }
 

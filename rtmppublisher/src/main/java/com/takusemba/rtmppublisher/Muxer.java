@@ -10,12 +10,12 @@ import com.today.im.IMMuxer;
 
 import net.butterflytv.rtmp_client.RTMPMuxer;
 
-class Muxer {
+public class Muxer {
 
     private static final int MSG_OPEN = 0;
     private static final int MSG_CLOSE = 1;
     private static final int MSG_SEND_VIDEO = 2;
-    private static final int MSG_SEND_AUDIO = 3;
+    public static final int MSG_SEND_AUDIO = 3;
     private static final int MSG_RECEIVE_VIDEO = 4;
     private static final int MSG_RECEIVE_AUDIO = 5;
 

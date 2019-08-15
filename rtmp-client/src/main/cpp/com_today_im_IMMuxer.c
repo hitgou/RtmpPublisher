@@ -100,13 +100,18 @@ JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
         return NULL;
     }
 
+    int type = 3;
+    if (packet.m_packetType == RTMP_PACKET_TYPE_AUDIO) {
+        type = 3;
+    }
+
     jbyteArray byteA = (*env)->NewByteArray(env, packet.m_nBodySize);
     (*env)->SetByteArrayRegion(env, byteA, 0, packet.m_nBodySize, packet.m_body);
 
     jmethodID constructor = (*env)->GetMethodID(env, objectClass, "<init>", "(IIIIII[B)V");
 
     jobject result = (*env)->NewObject(env, objectClass, constructor, packet.m_headerType,
-                                       packet.m_packetType, packet.m_hasAbsTimestamp,
+                                       type, packet.m_hasAbsTimestamp,
                                        packet.m_nTimeStamp, packet.m_nInfoField2,
                                        packet.m_nBodySize, byteA);
 

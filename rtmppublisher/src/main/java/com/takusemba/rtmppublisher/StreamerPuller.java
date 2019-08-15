@@ -1,5 +1,6 @@
 package com.takusemba.rtmppublisher;
 
+import android.media.AudioManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -15,9 +16,11 @@ class StreamerPuller {
     private IMMuxer imMuxer = new IMMuxer();
     private boolean isPlaying = false;
     private PublisherListener publisherListener;
+    private  AudioManager audioManager;
 
-    StreamerPuller() {
+    StreamerPuller(AudioManager audioManager) {
         this.audioHandler = new AudioHandler();
+        this.audioManager = audioManager;
     }
 
     void open(String url) {
@@ -62,7 +65,7 @@ class StreamerPuller {
     }
 
     private void drain() {
-        final AudioPlayerHandler audioPlayerHandler = new AudioPlayerHandler();
+        final AudioPlayerHandler audioPlayerHandler = new AudioPlayerHandler(audioManager);
         audioPlayerHandler.prepare();
 
         HandlerThread handlerThread = new HandlerThread("AudioEncoder-drain");
@@ -82,7 +85,9 @@ class StreamerPuller {
                         continue;
                     }
                     Log.d(TAG, "接收到消息包：size=" + packet.bodySize);
-                    audioPlayerHandler.onPlaying(packet.body, 0, packet.body.length);
+                    if (packet.packetType == Muxer.MSG_SEND_AUDIO) {
+                        audioPlayerHandler.onPlaying(packet.body, 0, packet.body.length);
+                    }
                 }
                 release();
 

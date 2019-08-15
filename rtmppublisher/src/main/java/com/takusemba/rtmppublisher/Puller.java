@@ -1,5 +1,6 @@
 package com.takusemba.rtmppublisher;
 
+import android.media.AudioManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 
@@ -40,6 +41,7 @@ public interface Puller {
 
         private int audioBitrate;
         private PublisherListener publisherListener;
+        private AudioManager audioManager;
 
 
         /**
@@ -79,6 +81,11 @@ public interface Puller {
             return this;
         }
 
+        public Builder setAutoManager(AudioManager audioManager) {
+            this.audioManager = audioManager;
+            return this;
+        }
+
         /**
          * @return the created RtmpPublisher
          */
@@ -92,7 +99,7 @@ public interface Puller {
             if (url == null || audioBitrate <= 0) {
                 audioBitrate = DEFAULT_AUDIO_BITRATE;
             }
-            return new RtmpPuller(activity, url, audioBitrate, publisherListener);
+            return new RtmpPuller(activity, url, audioBitrate, publisherListener, audioManager);
         }
 
     }

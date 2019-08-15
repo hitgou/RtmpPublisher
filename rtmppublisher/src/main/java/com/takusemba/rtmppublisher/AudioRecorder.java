@@ -31,6 +31,7 @@ class AudioRecorder {
     public static final String APP_PATH = Environment.getExternalStorageDirectory().toString() + File.separator + "demo" + File.separator;
     //    public static final String APP_RECORDER_FILE_PATH = APP_PATH + "recorder_file" + File.separator;
     public static final String recorderFilePath = APP_PATH + "recorder.ops";
+    public static final String recorderPcmFilePath = APP_PATH + "recorder.pcm";
 
     private AudioRecord audioRecord;
     private final int sampleRate;

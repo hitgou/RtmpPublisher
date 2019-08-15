@@ -1,7 +1,8 @@
 package com.takusemba.rtmppublisher;
 
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.util.Log;
 
@@ -30,7 +31,7 @@ import java.util.concurrent.Semaphore;
  */
 public class AudioPlayerHandler implements Runnable {
     private final static String TAG = "AudioPlayerHandler";
-    private AudioTrack track = null;// 录音文件播放对象
+    private AudioTrack audioTrack = null;// 录音文件播放对象
     private boolean isPlaying = false;// 标记是否正在录音中
     private int bufferSize = -1;// 播放缓冲大小
     private LinkedBlockingDeque<Object> dataQueue = new LinkedBlockingDeque<>();
@@ -38,18 +39,29 @@ public class AudioPlayerHandler implements Runnable {
     private Semaphore semaphore = new Semaphore(1);
     // 是否释放资源的标志位
     private boolean release = false;
+    private AudioManager audioManager;
+    private int sessionId;
 
-    public AudioPlayerHandler() {
+    private AudioAttributes audioAttributes = new AudioAttributes.Builder().setLegacyStreamType(AudioManager.STREAM_MUSIC).build();
+    private AudioFormat audioFormat = new AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).
+            setSampleRate(AudioRecorder.SAMPLE_RATE).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build();
+
+
+    public AudioPlayerHandler(AudioManager audioManager) {
         try {
+            this.audioManager = audioManager;
+            this.sessionId = audioManager.generateAudioSessionId();
             // 获取缓冲 大小
             bufferSize = AudioTrack.getMinBufferSize(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_OUT,
                     AudioRecorder.AUDIO_FORMAT);
 
             // 实例AudioTrack
-            track = new AudioTrack(AudioManager.STREAM_VOICE_CALL, AudioRecorder.SAMPLE_RATE,
+//            audioTrack = new AudioTrack(audioAttributes, audioFormat, bufferSize, AudioTrack.MODE_STREAM, sessionId);
+
+            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, AudioRecorder.SAMPLE_RATE,
                     AudioRecorder.CHANEL_OUT, AudioRecorder.AUDIO_FORMAT, bufferSize,
                     AudioTrack.MODE_STREAM);
-            track.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume());
+//            audioTrack.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume());
             // 默认需要抢占一个信号量。防止播放进程执行
 //            semaphore.acquire();
 
@@ -62,7 +74,7 @@ public class AudioPlayerHandler implements Runnable {
     }
 
     /**
-     * 播放，当有新数据传入时，
+     * 播放，当有新数据传入时， 1,2,3
      *
      * @param data       语音byte数组
      * @param startIndex 开始的偏移量
@@ -73,7 +85,7 @@ public class AudioPlayerHandler implements Runnable {
             return;
         }
         try {
-            byte[] newData = Arrays.copyOfRange(data, 1, data.length - 1);
+            byte[] newData = Arrays.copyOfRange(data, 1, data.length);
             dataQueue.putLast(newData);
 //            semaphore.release();
         } catch (InterruptedException e) {
@@ -86,8 +98,8 @@ public class AudioPlayerHandler implements Runnable {
      * 准备播放
      */
     public void prepare() {
-        if (track != null && !isPlaying) {
-            track.play();
+        if (audioTrack != null && !isPlaying) {
+            audioTrack.play();
         }
         isPlaying = true;
     }
@@ -96,8 +108,8 @@ public class AudioPlayerHandler implements Runnable {
      * 停止播放
      */
     public void stop() {
-        if (track != null) {
-            track.stop();
+        if (audioTrack != null) {
+            audioTrack.stop();
         }
         isPlaying = false;
     }
@@ -109,9 +121,9 @@ public class AudioPlayerHandler implements Runnable {
         release = true;
         isPlaying = false;
 //        semaphore.release();
-        if (track != null) {
-            track.release();
-            track = null;
+        if (audioTrack != null) {
+            audioTrack.release();
+            audioTrack = null;
         }
     }
 
@@ -121,7 +133,7 @@ public class AudioPlayerHandler implements Runnable {
         final Long createDecoder = opusUtils.createDecoder(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN_OPUS);
         byte[] bufferArray = new byte[80];
 
-        File file = new File(AudioRecorder.recorderFilePath);
+        File file = new File(AudioRecorder.recorderPcmFilePath);
         File fileDir = file.getParentFile();
         if (!fileDir.exists()) {
             fileDir.mkdirs();
@@ -137,15 +149,18 @@ public class AudioPlayerHandler implements Runnable {
             while (isPlaying) {
                 if (dataQueue.size() > 0) {
                     byte[] data = (byte[]) dataQueue.pollFirst();
+
                     fileOpusBufferedOutputStream.write(data);//写入OPUS
 
-                    short[] decodeBufferArray = new short[bufferArray.length * 4];
-                    int size = opusUtils.decode(createDecoder, data, decodeBufferArray);
-                    if (size > 0) {
-                        short[] decodeArray = new short[size];
-                        System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
-                        track.write(decodeArray, 0, decodeArray.length);
-                    }
+                    audioTrack.write(data, 0, data.length);
+
+//                    short[] decodeBufferArray = new short[bufferArray.length * 4];
+//                    int size = opusUtils.decode(createDecoder, data, decodeBufferArray);
+//                    if (size > 0) {
+//                        short[] decodeArray = new short[size];
+//                        System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
+//                        audioTrack.write(decodeArray, 0, decodeArray.length);
+//                    }
                 } else {
                     try {
                         Thread.sleep(10);
@@ -157,8 +172,10 @@ public class AudioPlayerHandler implements Runnable {
                 }
             }
 
+            Log.e(TAG, "播放结束");
             fileOpusBufferedOutputStream.close();
             fileOutputStream.close();
+            opusUtils.destroyEncoder(createDecoder);
         } catch (IOException e) {
             e.printStackTrace();
         }

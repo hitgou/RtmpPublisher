@@ -1,5 +1,6 @@
 package com.takusemba.rtmppublishersample
 
+import android.media.AudioManager
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.os.Handler
@@ -24,6 +25,7 @@ class PlayerActivity : AppCompatActivity(), PublisherListener {
     private val handler = Handler()
     private var thread: Thread? = null
     private var isCounting = false
+    private lateinit var audioManager: AudioManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +37,8 @@ class PlayerActivity : AppCompatActivity(), PublisherListener {
         cameraButton = findViewById(R.id.toggle_camera)
         label = findViewById(R.id.live_label)
 
+        audioManager = getSystemService(AudioManager::class.java)
+
         if (url.isBlank()) {
             Toast.makeText(this, R.string.error_empty_url, Toast.LENGTH_SHORT)
                     .apply { setGravity(Gravity.CENTER, 0, 0) }
@@ -44,6 +48,7 @@ class PlayerActivity : AppCompatActivity(), PublisherListener {
                     .setUrl(url)
                     .setAudioBitrate(Puller.Builder.DEFAULT_AUDIO_BITRATE)
                     .setPublisherListener(this)
+                    .setAutoManager(audioManager)
                     .build()
 
             pullButton.setOnClickListener {
