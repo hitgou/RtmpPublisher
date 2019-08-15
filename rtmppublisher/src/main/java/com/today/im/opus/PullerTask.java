@@ -8,8 +8,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
 
-import com.takusemba.rtmppublisher.Muxer;
-import com.takusemba.rtmppublisher.PublisherListener;
 import com.today.im.IMMuxer;
 import com.today.im.PacketInfo;
 
@@ -80,7 +78,7 @@ public class PullerTask {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    publisherListener.onStarted();
+                    publisherListener.onPublishStarted();
                 }
             });
         }
@@ -98,7 +96,7 @@ public class PullerTask {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    publisherListener.onStopped();
+                    publisherListener.onPublishStopped();
                 }
             });
         }
@@ -108,6 +106,10 @@ public class PullerTask {
 
     public boolean isPlaying() {
         return isPlaying;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     private void collectData() {
@@ -121,7 +123,7 @@ public class PullerTask {
                 }
                 continue;
             }
-            if (packet.packetType == Muxer.MSG_SEND_AUDIO) {
+            if (packet.packetType == Constants.MSG_SEND_AUDIO) {
                 byte[] data = packet.body;
                 byte[] newData = Arrays.copyOfRange(data, 1, data.length);
                 dataQueue.push(newData);

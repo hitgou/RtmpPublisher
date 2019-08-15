@@ -1,25 +1,25 @@
-package com.takusemba.rtmppublisher;
+package com.today.im.opus;
 
 public interface PublisherListener {
 
     /**
      * Called when {@link Publisher} started publishing
      */
-    void onStarted();
+    void onPublishStarted();
 
     /**
      * Called when {@link Publisher} stopped publishing
      */
-    void onStopped();
+    void onPublishStopped();
 
     /**
      * Called when stream is disconnected
      */
-    void onDisconnected();
+    void onPublishDisconnected();
 
     /**
      * Called when failed to connect
      */
-    void onFailedToConnect();
+    void onPublishFailedToConnect();
 
 }

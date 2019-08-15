@@ -35,15 +35,15 @@ static FILE *g_file_handle = NULL;
 static uint64_t g_time_begin;
 
 
-RTMP *rtmp;
+//RTMP *rtmp;
 bool isMuted;
 char *voipCode;
 float upLoadDataSize;
 float downLoadDataSize;
 
 //AudioUnitPlayer *mAudioUnitPlayer;
-RTMP *pPubRtmp;
-RTMP *pPlayRtmp;
+RTMP *publishRTMP;
+RTMP *pullRTMP;
 bool isPushing;
 bool isPulling;
 bool isPlaying;
@@ -55,28 +55,28 @@ void initWithSampleRate(int sampleRate, int audioEncoder) {
 }
 
 int publishWithUrl(char *url) {
-    rtmp = RTMP_Alloc();
-    if (rtmp == NULL) {
+    publishRTMP = RTMP_Alloc();
+    if (publishRTMP == NULL) {
         return -1;
     }
 
-    RTMP_Init(rtmp);
+    RTMP_Init(publishRTMP);
 
-    int ret = RTMP_SetupURL(rtmp, url);
+    int ret = RTMP_SetupURL(publishRTMP, url);
     if (!ret) {
-        RTMP_Free(rtmp);
+        RTMP_Free(publishRTMP);
         return -2;
     }
 
-    RTMP_EnableWrite(rtmp);
+    RTMP_EnableWrite(publishRTMP);
 
-    ret = RTMP_Connect(rtmp, NULL);
+    ret = RTMP_Connect(publishRTMP, NULL);
     if (!ret) {
-        RTMP_Free(rtmp);
+        RTMP_Free(publishRTMP);
         return -3;
     }
 
-    ret = RTMP_ConnectStream(rtmp, 0);
+    ret = RTMP_ConnectStream(publishRTMP, 0);
     if (!ret) {
         return -4;
     }
@@ -86,12 +86,21 @@ int publishWithUrl(char *url) {
 
 void stopPublish() {
     isPushing = false;
-    if (pPubRtmp) {
-        if (RTMP_IsConnected(pPubRtmp)) {
-            RTMP_Close(pPubRtmp);
+    if (publishRTMP) {
+        if (RTMP_IsConnected(publishRTMP)) {
+            RTMP_Close(publishRTMP);
         }
-        RTMP_Free(pPubRtmp);
+        RTMP_Free(publishRTMP);
     }
+}
+
+int publishRtmpIsConnected() {
+    if (publishRTMP) {
+        if (RTMP_IsConnected(publishRTMP)) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int write(char *buf, int type, int buflen, uint64_t timestamp) {
@@ -104,31 +113,31 @@ int write(char *buf, int type, int buflen, uint64_t timestamp) {
     rtmp_pakt.m_nTimeStamp = timestamp;
     rtmp_pakt.m_nChannel = 4;
     rtmp_pakt.m_headerType = RTMP_PACKET_SIZE_LARGE;
-    rtmp_pakt.m_nInfoField2 = rtmp->m_stream_id;
+    rtmp_pakt.m_nInfoField2 = publishRTMP->m_stream_id;
     memcpy(rtmp_pakt.m_body, buf, buflen);
-    ret = RTMP_SendPacket(rtmp, &rtmp_pakt, 0);
+    ret = RTMP_SendPacket(publishRTMP, &rtmp_pakt, 0);
     RTMPPacket_Free(&rtmp_pakt);
 
     return (ret > 0) ? 0 : -1;
 }
 
 int pullWithUrl(char *url) {
-    pPlayRtmp = RTMP_Alloc();
-    if (pPlayRtmp == NULL) {
+    pullRTMP = RTMP_Alloc();
+    if (pullRTMP == NULL) {
         return -1;
     }
 
-    RTMP_Init(pPlayRtmp);
+    RTMP_Init(pullRTMP);
 
-    int ret = RTMP_SetupURL(pPlayRtmp, url);
+    int ret = RTMP_SetupURL(pullRTMP, url);
 
 
-    if (!RTMP_Connect(pPlayRtmp, NULL) || !RTMP_ConnectStream(pPlayRtmp, 0)) {
+    if (!RTMP_Connect(pullRTMP, NULL) || !RTMP_ConnectStream(pullRTMP, 0)) {
         return -1;
     }
 
-    RTMP_SetBufferMS(pPlayRtmp, 100);
-    RTMP_UpdateBufferMS(pPlayRtmp);
+    RTMP_SetBufferMS(pullRTMP, 100);
+    RTMP_UpdateBufferMS(pullRTMP);
 
     isPulling = true;
 
@@ -141,17 +150,26 @@ int replayWithUrl(char *url) {
 
 void stopPull() {
     isPulling = false;
-    if (rtmp) {
-        RTMP_Close(rtmp);
-        RTMP_Free(rtmp);
-        rtmp = NULL;
+    if (pullRTMP) {
+        RTMP_Close(pullRTMP);
+        RTMP_Free(pullRTMP);
+        pullRTMP = NULL;
     }
+}
+
+int pullRtmpIsConnected() {
+    if (pullRTMP) {
+        if (RTMP_IsConnected(pullRTMP)) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 RTMPPacket read() {
     RTMPPacket rtmp_pakt = {0};
     if (isPulling) {
-        RTMP_ReadPacket(pPlayRtmp, &rtmp_pakt);
+        RTMP_ReadPacket(pullRTMP, &rtmp_pakt);
         if (RTMPPacket_IsReady(&rtmp_pakt)) {
             if (!rtmp_pakt.m_nBodySize)
                 return rtmp_pakt;
@@ -168,7 +186,7 @@ RTMPPacket read() {
                 // 处理视频数据包
             } else if (rtmp_pakt.m_packetType == RTMP_PACKET_TYPE_INVOKE) {
                 // 处理invoke包
-                RTMP_ClientPacket(pPlayRtmp, &rtmp_pakt);
+                RTMP_ClientPacket(pullRTMP, &rtmp_pakt);
             } else if (rtmp_pakt.m_packetType == RTMP_PACKET_TYPE_INFO) {
                 // 处理信息包
                 //JRZXVoipLog(@"RTMP_PACKET_TYPE_INFO");
@@ -182,14 +200,6 @@ RTMPPacket read() {
     return rtmp_pakt;
 }
 
-int rtmpIsConnected() {
-    if (rtmp) {
-        if (RTMP_IsConnected(rtmp)) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 void playAudioWaitingToLong() {
 

@@ -23,7 +23,7 @@
         android:paddingTop="8dp"
         android:paddingEnd="16dp"
         android:paddingBottom="8dp"
-        android:text="@string/start_pull" />
+        android:text="@string/start_pulling" />
 
     <Button
         android:id="@+id/toggle_back"

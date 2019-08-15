@@ -31,6 +31,13 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPublish
     stopPublish();
 }
 
+
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isPublishConnected
+        (JNIEnv *env, jobject instance) {
+    return publishRtmpIsConnected();
+}
+
+
 JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
         (JNIEnv *env, jobject instance, jbyteArray data_, jint type, jint length,
          jint timestamp) {
@@ -79,6 +86,13 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPull
     stopPull();
 }
 
+
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isConnected
+        (JNIEnv *env, jobject instance) {
+    return pullRtmpIsConnected();
+}
+
+
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
         (JNIEnv *, jobject);
 
@@ -116,11 +130,6 @@ JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
 //    (*env)->DeleteLocalRef(env, constructor);
 
     return result;
-}
-
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isConnected
-        (JNIEnv *env, jobject instance) {
-    return rtmpIsConnected();
 }
 
 

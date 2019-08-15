@@ -39,6 +39,15 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_publishWithUrl
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPublish
   (JNIEnv *, jobject);
 
+
+/*
+ * Class:     com_today_im_IMMuxer
+ * Method:    isConnected
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isPublishConnected
+        (JNIEnv *, jobject);
+
 /*
  * Class:     com_today_im_IMMuxer
  * Method:    write
@@ -81,6 +90,15 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_startPlay
 
 /*
  * Class:     com_today_im_IMMuxer
+ * Method:    isConnected
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isPullConnected
+        (JNIEnv *, jobject);
+
+
+/*
+ * Class:     com_today_im_IMMuxer
  * Method:    stopPull
  * Signature: ()V
  */
@@ -94,15 +112,6 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPlay
  */
 JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
   (JNIEnv *, jobject);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    isConnected
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isConnected
-  (JNIEnv *, jobject);
-
 #ifdef __cplusplus
 }
 #endif

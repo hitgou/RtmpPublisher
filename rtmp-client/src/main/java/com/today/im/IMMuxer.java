@@ -17,6 +17,8 @@ public class IMMuxer {
 
     public native void stopPublish();
 
+    public native int isPublishConnected();
+
     public native int write(byte[] data, int type, int length, int timestamp);
 
     public native int pullWithUrl(String rtmpURL);
@@ -25,12 +27,9 @@ public class IMMuxer {
 
     public native void stopPull();
 
-//    public native void startPlay();
-
-//    public native void stopPull();
+    public native int isPullConnected();
 
     public native PacketInfo read();
 
-    public native int isConnected();
 
 }

@@ -37,7 +37,7 @@
         android:paddingEnd="16dp"
         android:paddingStart="16dp"
         android:paddingTop="8dp"
-        android:text="@string/go_pull" />
+        android:text="@string/start_pulling" />
 
 
     <ImageView

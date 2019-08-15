@@ -22,13 +22,17 @@ int publishWithUrl(char *url);
 
 void stopPublish();
 
+int publishRtmpIsConnected();
+
 int write(char *buf, int type, int buflen, uint64_t timestamp);
 
 int pullWithUrl(char *url);
 
-int replayerWithUrl(char *url);
+int replayWithUrl(char *url);
 
 void stopPull();
+
+int pullRtmpIsConnected();
 
 void playAudioWaitingToLong();
 
@@ -38,7 +42,7 @@ void playAudioWithBuffer(char *data);
 
 RTMPPacket read();
 
-int rtmpIsConnected();
+
 
 #ifdef __cplusplus
 }

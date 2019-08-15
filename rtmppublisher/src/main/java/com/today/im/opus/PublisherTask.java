@@ -8,8 +8,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
 
-import com.takusemba.rtmppublisher.Muxer;
-import com.takusemba.rtmppublisher.PublisherListener;
 import com.today.im.IMMuxer;
 
 import java.util.concurrent.LinkedBlockingDeque;
@@ -69,7 +67,7 @@ public class PublisherTask {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    publisherListener.onStarted();
+                    publisherListener.onPublishStarted();
                 }
             });
         }
@@ -91,7 +89,7 @@ public class PublisherTask {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    publisherListener.onStopped();
+                    publisherListener.onPublishStopped();
                 }
             });
         }
@@ -101,6 +99,10 @@ public class PublisherTask {
 
     public boolean isPublishing() {
         return isPublishing;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     private void collectData(int bufferSize) {
@@ -138,10 +140,10 @@ public class PublisherTask {
             if (data != null) {
                 timestamp += 20;
                 Log.d(TAG, "消息采样包：size=" + data.length + ", 队列 size =" + dataQueue.size());
-                int type = Muxer.MSG_SEND_AUDIO;
+                int type = Constants.MSG_SEND_AUDIO;
                 int result = imMuxer.write(data, type, data.length, timestamp);
                 Log.d(TAG, "result is " + result);
-                if (result == -1 && imMuxer.isConnected() != 1) {
+                if (result == -1 && imMuxer.isPublishConnected() != 1) {
                     Log.d(TAG, "result is " + result);
                     this.stop();
                 }
