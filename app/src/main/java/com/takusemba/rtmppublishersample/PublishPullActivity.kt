@@ -132,7 +132,7 @@ class PublishPullActivity : AppCompatActivity(), PublisherListener {
 
     private fun stopCounting() {
         isCounting = false
-        tvLog.text = ""
+        tvLog.text = " "
         tvLog.visibility = View.GONE
         thread?.interrupt()
     }
