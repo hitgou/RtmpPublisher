@@ -1,7 +1,3 @@
-/*
- * Coding by Zhonghua. from 18-9-14 下午5:56.
- */
-
 package com.today.im.opus
 
 /**

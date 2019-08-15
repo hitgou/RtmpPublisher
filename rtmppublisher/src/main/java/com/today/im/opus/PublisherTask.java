@@ -1,4 +1,4 @@
-package com.takusemba.rtmppublisher;
+package com.today.im.opus;
 
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -8,16 +8,15 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
 
+import com.takusemba.rtmppublisher.Muxer;
+import com.takusemba.rtmppublisher.PublisherListener;
 import com.today.im.IMMuxer;
-import com.today.im.opus.OpusUtils;
-import com.today.im.opus.Uilts;
 
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class PublisherTask {
     private final static String TAG = "PublisherTask";
 
-    private AudioHandler audioHandler;
     private IMMuxer imMuxer = new IMMuxer();
     private boolean isPublishing = false;
     private PublisherListener publisherListener;
@@ -28,7 +27,6 @@ public class PublisherTask {
     private int timestamp;
 
     public PublisherTask(AudioManager audioManager, PublisherListener publisherListener, String url) {
-        this.audioHandler = new AudioHandler();
         this.audioManager = audioManager;
         this.publisherListener = publisherListener;
         this.url = url;
@@ -47,8 +45,8 @@ public class PublisherTask {
             public void run() {
                 int result = imMuxer.publishWithUrl(publishUrl);
                 if (result == 1) {
-                    final int bufferSize = AudioRecord.getMinBufferSize(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN, AudioRecorder.AUDIO_FORMAT);
-                    audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN, AudioRecorder.AUDIO_FORMAT, bufferSize);
+                    final int bufferSize = AudioRecord.getMinBufferSize(Constants.SAMPLE_RATE, Constants.CHANEL_IN, Constants.AUDIO_FORMAT);
+                    audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, Constants.SAMPLE_RATE, Constants.CHANEL_IN, Constants.AUDIO_FORMAT, bufferSize);
                     audioRecord.startRecording();
 
                     collectData(bufferSize);
@@ -107,7 +105,7 @@ public class PublisherTask {
 
     private void collectData(int bufferSize) {
         final OpusUtils opusUtils = new OpusUtils();
-        final Long createEncoder = opusUtils.createEncoder(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN_OPUS, 3);
+        final Long createEncoder = opusUtils.createEncoder(Constants.SAMPLE_RATE, Constants.CHANEL_IN_OPUS, 3);
 
         byte[] audioBuffer = new byte[640];
         while (isPublishing) {

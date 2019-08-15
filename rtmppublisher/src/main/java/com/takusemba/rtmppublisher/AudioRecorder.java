@@ -9,6 +9,7 @@ import android.os.HandlerThread;
 import android.util.Log;
 
 import com.today.im.PacketInfo;
+import com.today.im.opus.Constants;
 import com.today.im.opus.OpusUtils;
 import com.today.im.opus.Uilts;
 
@@ -21,17 +22,6 @@ import java.nio.CharBuffer;
 
 class AudioRecorder {
     private final static String TAG = "AudioRecorder";
-    public static final int SAMPLE_RATE = 16000;
-    public static final int CHANEL_IN = AudioFormat.CHANNEL_IN_MONO;
-    public static final int CHANEL_IN_OPUS = 1;
-    public static final int CHANNEL_OUT_MONO = AudioFormat.CHANNEL_OUT_MONO;
-
-    public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-
-    public static final String APP_PATH = Environment.getExternalStorageDirectory().toString() + File.separator + "demo" + File.separator;
-    //    public static final String APP_RECORDER_FILE_PATH = APP_PATH + "recorder_file" + File.separator;
-    public static final String recorderFilePath = APP_PATH + "recorder.ops";
-    public static final String recorderPcmFilePath = APP_PATH + "recorder.pcm";
 
     private AudioRecord audioRecord;
     private final int sampleRate;
@@ -50,9 +40,9 @@ class AudioRecorder {
     }
 
     public void start() {
-        final int bufferSize = AudioRecord.getMinBufferSize(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN, AudioRecorder.AUDIO_FORMAT);
+        final int bufferSize = AudioRecord.getMinBufferSize(Constants.SAMPLE_RATE, Constants.CHANEL_IN, Constants.AUDIO_FORMAT);
 
-        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, AudioRecorder.CHANEL_IN, AudioRecorder.AUDIO_FORMAT, bufferSize);
+        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, Constants.CHANEL_IN, Constants.AUDIO_FORMAT, bufferSize);
         audioRecord.startRecording();
 
 //        final AudioPlayerHandler audioPlayerHandler = new AudioPlayerHandler();
@@ -63,7 +53,7 @@ class AudioRecorder {
 //        handler1.post(audioPlayerHandler);
 
         final OpusUtils opusUtils = new OpusUtils();
-        final Long createEncoder = opusUtils.createEncoder(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN_OPUS, 3);
+        final Long createEncoder = opusUtils.createEncoder(Constants.SAMPLE_RATE, Constants.CHANEL_IN_OPUS, 3);
 
         HandlerThread handlerThread = new HandlerThread("AudioRecorder-record");
         handlerThread.start();

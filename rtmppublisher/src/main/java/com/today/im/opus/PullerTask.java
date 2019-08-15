@@ -1,4 +1,4 @@
-package com.takusemba.rtmppublisher;
+package com.today.im.opus;
 
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -8,9 +8,10 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
 
+import com.takusemba.rtmppublisher.Muxer;
+import com.takusemba.rtmppublisher.PublisherListener;
 import com.today.im.IMMuxer;
 import com.today.im.PacketInfo;
-import com.today.im.opus.OpusUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -22,7 +23,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 public class PullerTask {
     private final static String TAG = "PullerTask";
 
-    private AudioHandler audioHandler;
     private IMMuxer imMuxer = new IMMuxer();
     private boolean isPlaying = false;
     private PublisherListener publisherListener;
@@ -35,16 +35,15 @@ public class PullerTask {
     private int bufferSize = -1;
 
     public PullerTask(AudioManager audioManager, PublisherListener publisherListener, String url) {
-        this.audioHandler = new AudioHandler();
         this.audioManager = audioManager;
         this.publisherListener = publisherListener;
         this.url = url;
 
-        bufferSize = AudioTrack.getMinBufferSize(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANNEL_OUT_MONO,
-                AudioRecorder.AUDIO_FORMAT);
+        bufferSize = AudioTrack.getMinBufferSize(Constants.SAMPLE_RATE, Constants.CHANNEL_OUT_MONO,
+                Constants.AUDIO_FORMAT);
 
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, AudioRecorder.SAMPLE_RATE,
-                AudioRecorder.CHANNEL_OUT_MONO, AudioRecorder.AUDIO_FORMAT, bufferSize,
+        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, Constants.SAMPLE_RATE,
+                Constants.CHANNEL_OUT_MONO, Constants.AUDIO_FORMAT, bufferSize,
                 AudioTrack.MODE_STREAM);
     }
 
@@ -133,9 +132,9 @@ public class PullerTask {
 
     private void playerData() {
         final OpusUtils opusUtils = new OpusUtils();
-        final Long createDecoder = opusUtils.createDecoder(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN_OPUS);
+        final Long createDecoder = opusUtils.createDecoder(Constants.SAMPLE_RATE, Constants.CHANEL_IN_OPUS);
 
-        File file = new File(AudioRecorder.recorderFilePath);
+        File file = new File(Constants.recorderFilePath);
         File fileDir = file.getParentFile();
         if (!fileDir.exists()) {
             fileDir.mkdirs();
