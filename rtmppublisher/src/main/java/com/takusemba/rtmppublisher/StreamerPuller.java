@@ -2,6 +2,7 @@ package com.takusemba.rtmppublisher;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 
 import com.today.im.IMMuxer;
@@ -13,6 +14,7 @@ class StreamerPuller {
     private AudioHandler audioHandler;
     private IMMuxer imMuxer = new IMMuxer();
     private boolean isPlaying = false;
+    private PublisherListener publisherListener;
 
     StreamerPuller() {
         this.audioHandler = new AudioHandler();
@@ -24,6 +26,17 @@ class StreamerPuller {
 
     void startStreaming(int audioBitrate) {
         isPlaying = true;
+
+        final Handler uiHandler = new Handler(Looper.getMainLooper());
+        if (publisherListener != null) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    publisherListener.onStarted();
+                }
+            });
+        }
+
         drain();
     }
 
@@ -31,11 +44,21 @@ class StreamerPuller {
         isPlaying = false;
         audioHandler.stop();
         imMuxer.stopPlay();
-        imMuxer.stopPull();
+
+        final Handler uiHandler = new Handler(Looper.getMainLooper());
+        if (publisherListener != null) {
+            uiHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    publisherListener.onStopped();
+                }
+            });
+        }
     }
 
     boolean isStreaming() {
-        return imMuxer.isConnected() == 1;
+        return isPlaying;
+//        return imMuxer.isConnected() == 1;
     }
 
     private void drain() {
@@ -71,4 +94,9 @@ class StreamerPuller {
     private void release() {
 
     }
+
+    void setMuxerListener(PublisherListener listener) {
+        this.publisherListener = listener;
+    }
+
 }

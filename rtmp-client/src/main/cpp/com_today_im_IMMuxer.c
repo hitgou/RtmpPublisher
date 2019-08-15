@@ -81,7 +81,9 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_startPlay
         (JNIEnv *, jobject);
 
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPlay
-        (JNIEnv *, jobject);
+        (JNIEnv *env, jobject instance) {
+    stopPlay();
+}
 
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
         (JNIEnv *, jobject);

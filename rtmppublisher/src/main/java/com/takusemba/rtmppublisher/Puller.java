@@ -39,7 +39,7 @@ public interface Puller {
         private String url;
 
         private int audioBitrate;
-        private PublisherListener listener;
+        private PublisherListener publisherListener;
 
 
         /**
@@ -74,8 +74,8 @@ public interface Puller {
          * Set the {@link PublisherListener}
          * this parameter is optional
          */
-        public Builder setListener(PublisherListener listener) {
-            this.listener = listener;
+        public Builder setPublisherListener(PublisherListener publisherListener) {
+            this.publisherListener = publisherListener;
             return this;
         }
 
@@ -92,7 +92,7 @@ public interface Puller {
             if (url == null || audioBitrate <= 0) {
                 audioBitrate = DEFAULT_AUDIO_BITRATE;
             }
-            return new RtmpPuller(activity, url, audioBitrate, listener);
+            return new RtmpPuller(activity, url, audioBitrate, publisherListener);
         }
 
     }

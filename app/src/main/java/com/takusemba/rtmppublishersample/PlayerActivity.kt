@@ -1,6 +1,5 @@
 package com.takusemba.rtmppublishersample
 
-import android.media.MediaExtractor
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.os.Handler
@@ -44,7 +43,7 @@ class PlayerActivity : AppCompatActivity(), PublisherListener {
             puller = Puller.Builder(this)
                     .setUrl(url)
                     .setAudioBitrate(Puller.Builder.DEFAULT_AUDIO_BITRATE)
-                    .setListener(this)
+                    .setPublisherListener(this)
                     .build()
 
             pullButton.setOnClickListener {

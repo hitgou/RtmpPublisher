@@ -7,6 +7,10 @@ import android.util.Log;
 
 import com.today.im.opus.OpusUtils;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
@@ -47,7 +51,7 @@ public class AudioPlayerHandler implements Runnable {
                     AudioTrack.MODE_STREAM);
             track.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume());
             // 默认需要抢占一个信号量。防止播放进程执行
-            semaphore.acquire();
+//            semaphore.acquire();
 
             // 开启播放线程
             new Thread(this).start();
@@ -71,7 +75,7 @@ public class AudioPlayerHandler implements Runnable {
         try {
             byte[] newData = Arrays.copyOfRange(data, 1, data.length - 1);
             dataQueue.putLast(newData);
-            semaphore.release();
+//            semaphore.release();
         } catch (InterruptedException e) {
             Log.e(TAG, "启动播放出错", e);
             e.printStackTrace();
@@ -84,9 +88,8 @@ public class AudioPlayerHandler implements Runnable {
     public void prepare() {
         if (track != null && !isPlaying) {
             track.play();
-            isPlaying = true;
         }
-
+        isPlaying = true;
     }
 
     /**
@@ -95,8 +98,8 @@ public class AudioPlayerHandler implements Runnable {
     public void stop() {
         if (track != null) {
             track.stop();
-            isPlaying = false;
         }
+        isPlaying = false;
     }
 
     /**
@@ -104,7 +107,8 @@ public class AudioPlayerHandler implements Runnable {
      */
     public void release() {
         release = true;
-        semaphore.release();
+        isPlaying = false;
+//        semaphore.release();
         if (track != null) {
             track.release();
             track = null;
@@ -117,27 +121,46 @@ public class AudioPlayerHandler implements Runnable {
         final Long createDecoder = opusUtils.createDecoder(AudioRecorder.SAMPLE_RATE, AudioRecorder.CHANEL_IN_OPUS);
         byte[] bufferArray = new byte[80];
 
-        while (true) {
-            if (release) {
-                return;
-            }
-            if (dataQueue.size() > 0) {
-                byte[] data = (byte[]) dataQueue.pollFirst();
-                short[] decodeBufferArray = new short[bufferArray.length * 4];
-                int size = opusUtils.decode(createDecoder, data, decodeBufferArray);
-                if (size > 0) {
-                    short[] decodeArray = new short[size];
-                    System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
-                    track.write(decodeArray, 0, decodeArray.length);
+        File file = new File(AudioRecorder.recorderFilePath);
+        File fileDir = file.getParentFile();
+        if (!fileDir.exists()) {
+            fileDir.mkdirs();
+        }
+        if (file.exists()) {
+            file.delete();
+        }
+        try {
+            file.createNewFile();
+            FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+            BufferedOutputStream fileOpusBufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+
+            while (isPlaying) {
+                if (dataQueue.size() > 0) {
+                    byte[] data = (byte[]) dataQueue.pollFirst();
+                    fileOpusBufferedOutputStream.write(data);//写入OPUS
+
+                    short[] decodeBufferArray = new short[bufferArray.length * 4];
+                    int size = opusUtils.decode(createDecoder, data, decodeBufferArray);
+                    if (size > 0) {
+                        short[] decodeArray = new short[size];
+                        System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
+                        track.write(decodeArray, 0, decodeArray.length);
+                    }
+                } else {
+                    try {
+                        Thread.sleep(10);
+//                    semaphore.acquire();
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "启动播放出错", e);
+                        e.printStackTrace();
+                    }
                 }
-            } else {
-                try {
-                    semaphore.acquire();
-                } catch (InterruptedException e) {
-                    Log.e(TAG, "启动播放出错", e);
-                    e.printStackTrace();
-                }
             }
+
+            fileOpusBufferedOutputStream.close();
+            fileOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

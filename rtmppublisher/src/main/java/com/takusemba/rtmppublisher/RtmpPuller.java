@@ -15,7 +15,7 @@ public class RtmpPuller implements Puller, LifecycleObserver {
     RtmpPuller(AppCompatActivity activity,
                String url,
                int audioBitrate,
-               PublisherListener listener) {
+               PublisherListener publisherListener) {
 
         activity.getLifecycle().addObserver(this);
 
@@ -23,6 +23,7 @@ public class RtmpPuller implements Puller, LifecycleObserver {
         this.audioBitrate = audioBitrate;
 
         this.streamerPuller = new StreamerPuller();
+        this.streamerPuller.setMuxerListener(publisherListener);
     }
 
     @Override

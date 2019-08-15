@@ -70,53 +70,53 @@ class AudioRecorder {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                File file = new File(AudioRecorder.recorderFilePath);
-                File fileDir = file.getParentFile();
-                if (!fileDir.exists()) {
-                    fileDir.mkdirs();
-                }
-                if (file.exists()) {
-                    file.delete();
-                }
-                try {
-                    file.createNewFile();
-                    FileOutputStream fileOutputStream = new FileOutputStream(file, true);
-                    BufferedOutputStream fileOpusBufferedOutputStream = new BufferedOutputStream(fileOutputStream);
+//                File file = new File(AudioRecorder.recorderFilePath);
+//                File fileDir = file.getParentFile();
+//                if (!fileDir.exists()) {
+//                    fileDir.mkdirs();
+//                }
+//                if (file.exists()) {
+//                    file.delete();
+//                }
+//                try {
+//                    file.createNewFile();
+//                    FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+//                    BufferedOutputStream fileOpusBufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
-                    int bufferReadResult;
+                int bufferReadResult;
 //                    byte[] data = new byte[bufferSize];
-                    byte[] audioBuffer = new byte[640];
-                    while (isRecording()) {
-                        int curShortSize = audioRecord.read(audioBuffer, 0, audioBuffer.length);
-                        if (curShortSize > 0 && curShortSize <= audioBuffer.length) {
-                            try {
-                                byte[] byteArray = new byte[bufferSize / 8];//编码后大小减小8倍
-                                int encodeSize = opusUtils.encode(createEncoder, Uilts.INSTANCE.byteArrayToShortArray(audioBuffer), 0, byteArray);
-                                if (encodeSize > 0) {
-                                    byte[] decodeArray = new byte[encodeSize];
-                                    System.arraycopy(byteArray, 0, decodeArray, 0, encodeSize);
+                byte[] audioBuffer = new byte[640];
+                while (isRecording()) {
+                    int curShortSize = audioRecord.read(audioBuffer, 0, audioBuffer.length);
+                    if (curShortSize > 0 && curShortSize <= audioBuffer.length) {
+                        try {
+                            byte[] byteArray = new byte[bufferSize / 8];//编码后大小减小8倍
+                            int encodeSize = opusUtils.encode(createEncoder, Uilts.INSTANCE.byteArrayToShortArray(audioBuffer), 0, byteArray);
+                            if (encodeSize > 0) {
+                                byte[] decodeArray = new byte[encodeSize];
+                                System.arraycopy(byteArray, 0, decodeArray, 0, encodeSize);
 
-                                    fileOpusBufferedOutputStream.write(decodeArray);//写入OPUS
+//                                    fileOpusBufferedOutputStream.write(decodeArray);//写入OPUS
 
-                                    Log.d(TAG, "消息采样包：size=" + decodeArray.length);
-//                                listener.onAudioRecorded(decodeArray, bufferReadResult);
+                                Log.d(TAG, "消息采样包：size=" + decodeArray.length);
+                                listener.onAudioRecorded(decodeArray, encodeSize);
 
 //                                audioPlayerHandler.onPlaying(decodeArray, 0, decodeArray.length);
-                                } else {
+                            } else {
 
-                                }
-                            } catch (Exception e) {
-                                Log.e(TAG, "启动播放出错", e);
-                                e.printStackTrace();
                             }
+                        } catch (Exception e) {
+                            Log.e(TAG, "启动播放出错", e);
+                            e.printStackTrace();
                         }
                     }
-                    fileOpusBufferedOutputStream.close();
-                    fileOutputStream.close();
-                    opusUtils.destroyEncoder(createEncoder);
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
+//                    fileOpusBufferedOutputStream.close();
+//                    fileOutputStream.close();
+                opusUtils.destroyEncoder(createEncoder);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
             }
         });
     }
