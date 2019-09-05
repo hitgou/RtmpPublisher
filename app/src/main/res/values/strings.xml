@@ -22,5 +22,16 @@
     <string name="url_publish">rtmp://47.106.33.6:9935/test/wxy</string>
     <string name="url_pull">rtmp://47.106.33.6:9935/test/wxy</string>
 
+    <string name="head" translatable="false">头像</string>
+    <string name="tel_callee_hint" translatable="false">邀请你语音通话</string>
+    <string name="tel_caller_hint" translatable="false">正在等待对方接受邀请...</string>
+    <string name="tel_calling_time" translatable="false">%1$s:%2$s</string>
+    <string name="tel_mute" translatable="false">静音</string>
+    <string name="tel_hands_free" translatable="false">免提</string>
+    <string name="tel_hangup" translatable="false">挂断</string>
+    <string name="tel_callee_pickup" translatable="false">接听</string>
+    <string name="network_unavailable" translatable="false">网络连接失败！</string>
+    <string name="request_failed" translatable="false">服务器不给力了,过一会儿再试试。</string>
+    <string name="unknownError" translatable="false">未知错误</string>
 
 </resources>

@@ -5,6 +5,8 @@
 #include "log.h"
 #include "today_rtmp.h"
 #include <android/log.h>
+#include <time.h>
+#include <string.h>
 
 #define AAC_ADTS_HEADER_SIZE 7
 #define FLV_TAG_HEAD_LEN 11
@@ -37,7 +39,8 @@ static uint64_t g_time_begin;
 
 //RTMP *rtmp;
 bool isMuted;
-char *voipCode;
+char *voipCode = "776761258";
+char *checkCodeData;
 float upLoadDataSize;
 float downLoadDataSize;
 
@@ -49,32 +52,96 @@ bool isPulling;
 bool isPlaying;
 bool isStartPull;
 int pubTs;
+int publishCount;
+int pullCount;
 
-void initWithSampleRate(int sampleRate, int audioEncoder) {
 
-}
-
-int publishWithUrl(char *url) {
+int publish(char *host, int port, char *app, char *path, char *guid,
+            char *md5) {
     publishRTMP = RTMP_Alloc();
     if (publishRTMP == NULL) {
         return -1;
     }
-
     RTMP_Init(publishRTMP);
 
-    int ret = RTMP_SetupURL(publishRTMP, url);
-    if (!ret) {
-        RTMP_Free(publishRTMP);
-        return -2;
-    }
+    char *sockhost;
+    sockhost = "";
+
+    AVal av_host = {host, strlen(host)};
+    AVal av_pageUrl = {md5, strlen(md5)};
+    AVal av_playpath = {path, strlen(path)};
+    AVal av_app = {app, strlen(app)};
+    AVal av_tcUrl = {guid, strlen(guid)};
+    AVal av_sockhost = {sockhost, 0};
+    RTMP_SetupStream(publishRTMP, RTMP_PROTOCOL_RTMP, &av_host, port, &av_sockhost, &av_playpath,
+                     &av_tcUrl, &av_pageUrl, 0, &av_app, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5);
 
     RTMP_EnableWrite(publishRTMP);
 
-    ret = RTMP_Connect(publishRTMP, NULL);
+    int ret = RTMP_Connect(publishRTMP, NULL);
     if (!ret) {
         RTMP_Free(publishRTMP);
+        publishRTMP = NULL;
         return -3;
     }
+
+    RTMPPacket rtmp_pakt = {0};
+    ret = RTMP_ReadPacket(publishRTMP, &rtmp_pakt);
+
+    ret = RTMP_ConnectStream(publishRTMP, 0);
+    if (!ret) {
+        return -4;
+    }
+
+    return 1;
+}
+
+int pull(char *host, int port, char *app, char *path, char *guid, char *md5) {
+    pullRTMP = RTMP_Alloc();
+    if (pullRTMP == NULL) {
+        return -1;
+    }
+    RTMP_Init(pullRTMP);
+
+    char *sockhost;
+    sockhost = "";
+
+    AVal av_host = {host, strlen(host)};
+    AVal av_pageUrl = {md5, strlen(md5)};
+    AVal av_playpath = {path, strlen(path)};
+    AVal av_app = {app, strlen(app)};
+    AVal av_tcUrl = {guid, strlen(guid)};
+    AVal av_sockhost = {sockhost, 0};
+    RTMP_SetupStream(pullRTMP, RTMP_PROTOCOL_RTMP, &av_host, port, &av_sockhost, &av_playpath,
+                     &av_tcUrl, &av_pageUrl, 0, &av_app, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5);
+
+    if (!RTMP_Connect(pullRTMP, NULL) || !RTMP_ConnectStream(pullRTMP, 0)) {
+        RTMP_Free(pullRTMP);
+        pullRTMP = NULL;
+        return -1;
+    }
+
+    RTMP_SetBufferMS(pullRTMP, 100);
+    RTMP_UpdateBufferMS(pullRTMP);
+
+    isPulling = true;
+
+    return 1;
+}
+
+
+int publish1() {
+    RTMP_EnableWrite(publishRTMP);
+
+    int ret = RTMP_Connect(publishRTMP, NULL);
+    if (!ret) {
+        RTMP_Free(publishRTMP);
+        publishRTMP = NULL;
+        return -3;
+    }
+
+    RTMPPacket rtmp_pakt = {0};
+    ret = RTMP_ReadPacket(publishRTMP, &rtmp_pakt);
 
     ret = RTMP_ConnectStream(publishRTMP, 0);
     if (!ret) {
@@ -91,6 +158,7 @@ void stopPublish() {
             RTMP_Close(publishRTMP);
         }
         RTMP_Free(publishRTMP);
+        publishRTMP = NULL;
     }
 }
 
@@ -122,6 +190,8 @@ int write(char *buf, int type, int buflen, uint64_t timestamp) {
 }
 
 int pullWithUrl(char *url) {
+    pullCount = 0;
+
     pullRTMP = RTMP_Alloc();
     if (pullRTMP == NULL) {
         return -1;
@@ -130,7 +200,6 @@ int pullWithUrl(char *url) {
     RTMP_Init(pullRTMP);
 
     int ret = RTMP_SetupURL(pullRTMP, url);
-
 
     if (!RTMP_Connect(pullRTMP, NULL) || !RTMP_ConnectStream(pullRTMP, 0)) {
         return -1;
@@ -153,7 +222,7 @@ void stopPull() {
     if (pullRTMP) {
         RTMP_Close(pullRTMP);
         RTMP_Free(pullRTMP);
-        pullRTMP = NULL;
+//        pullRTMP = NULL;
     }
 }
 
@@ -168,7 +237,7 @@ int pullRtmpIsConnected() {
 
 RTMPPacket read() {
     RTMPPacket rtmp_pakt = {0};
-    if (isPulling) {
+    if (isPulling && pullRTMP) {
         RTMP_ReadPacket(pullRTMP, &rtmp_pakt);
         if (RTMPPacket_IsReady(&rtmp_pakt)) {
             if (!rtmp_pakt.m_nBodySize)
@@ -213,4 +282,85 @@ void playAudioWithBuffer(char *data) {
 
 }
 
+int rtmpSetupStream(RTMP *rtmp, char *url, int requestCount) {
+    int ret = 0;
+    char *uuid = newGUID();
 
+    char *buff;
+    buff = url;
+
+    char *protocal = strsep(&url, "://");
+    char *urlAddress = strsep(NULL, "://");
+    if (urlAddress == NULL) {
+        ret = 0;
+    }
+
+    free(urlAddress);
+    free(protocal);
+
+    ret = 1;
+
+    return ret;
+}
+
+char *newGUID() {
+    srand(time(NULL));
+    static char buf[64] = {0};
+    snprintf(buf, sizeof(buf),
+             "{%08X-%04X-%04X-%04X-%04X%04X%04X}",
+             rand() & 0xffffffff,
+             rand() & 0xffff,
+             rand() & 0xffff,
+             rand() & 0xffff,
+             rand() & 0xffff, rand() & 0xffff, rand() & 0xffff
+    );
+    return (const char *) buf;
+}
+
+char *dataWithHexString(char *voipCode1) {
+    int len = sizeof(voipCode);
+    if (len == 0) return NULL;
+    char *buf = malloc(len);
+    if (!buf) return NULL;
+
+    char *result = malloc(len / 2);
+    unsigned char bytes;
+    char str[3] = {'\0', '\0', '\0'};
+    int i;
+    for (i = 0; i < len / 2; i++) {
+        str[0] = buf[i * 2];
+        str[1] = buf[i * 2 + 1];
+        bytes = strtol(str, NULL, 16);
+        memcpy(result, bytes, 1);
+    }
+
+    free(buf);
+    return result;
+}
+
+char *getCheckCodeData(char *data, int length) {
+    if (!checkCodeData) {
+        char *data = dataWithHexString(voipCode);
+        checkCodeData = data;
+    }
+    return checkCodeData;
+}
+
+#define key_Length 4
+
+void checkCodeAudioData(char *audioData, int audioLength) {
+    char *keyData = getCheckCodeData(audioData, buffLen);
+
+    if (!audioLength && keyData && !keyData.length) {
+        return;
+    }
+
+    byte[] keyBytes = (Byte *)[keyData bytes];
+    for (long i = 0; i < audioLength; i++) {
+        // 算出当前位置字节，要和密钥的异或运算的密钥字节
+        int l = i % key_Length;
+        char c = keyBytes[l];
+        // 异或运算
+        audioData[i] = (Byte) ((audioData[i]) ^ c);
+    }
+}

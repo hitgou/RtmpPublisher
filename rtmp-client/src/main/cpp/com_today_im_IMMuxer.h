@@ -7,13 +7,48 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+JNIEXPORT jstring JNICALL
+Java_com_today_im_IMMuxer_getSalt(JNIEnv *env, jobject instance) {
+    char salt[] = "6291D258227040D0A53203C1C5225275";
+    const char *salt1 = (char *) malloc(strlen(salt));
+    strcat(salt1, salt);
+
+    jstring result = (*env)->NewStringUTF(env, salt1);
+
+    free(salt1);
+
+    return result;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_today_im_IMMuxer_publish(JNIEnv *, jobject, jstring, jint,
+                                  jstring, jstring, jstring, jstring);
+
+JNIEXPORT jint JNICALL
+Java_com_today_im_IMMuxer_pull(JNIEnv *, jobject, jstring, jint,
+                               jstring, jstring, jstring, jstring);
+
+
+JNIEXPORT jint JNICALL
+Java_com_today_im_IMMuxer_publish1(JNIEnv *, jobject);
+
+
+JNIEXPORT jint JNICALL
+Java_com_today_im_IMMuxer_pullInit(JNIEnv *, jobject, jstring, jstring,
+                                   jstring, jstring, jstring, jstring);
+
+
+JNIEXPORT jint JNICALL
+Java_com_today_im_IMMuxer_pull1(JNIEnv *, jobject);
+
 /*
  * Class:     com_today_im_IMMuxer
  * Method:    initWithSampleRate
  * Signature: (II)Ljava/lang/Object;
  */
 JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_initWithSampleRate
-  (JNIEnv *, jobject, jint, jint);
+        (JNIEnv *, jobject, jint, jint);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -21,7 +56,7 @@ JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_initWithSampleRate
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
-  (JNIEnv *, jobject);
+        (JNIEnv *, jobject);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -29,7 +64,7 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
  * Signature: (Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_publishWithUrl
-  (JNIEnv *, jobject, jstring);
+        (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -37,7 +72,7 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_publishWithUrl
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPublish
-  (JNIEnv *, jobject);
+        (JNIEnv *, jobject);
 
 
 /*
@@ -54,7 +89,7 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isPublishConnected
  * Signature: ([BIII)I
  */
 JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
-  (JNIEnv *, jobject, jbyteArray, jint, jint, jint);
+        (JNIEnv *, jobject, jbyteArray, jint, jint, jint);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -62,7 +97,7 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_pullWithUrl
-  (JNIEnv *, jobject, jstring);
+        (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -70,7 +105,7 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_pullWithUrl
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_replayWithUrl
-  (JNIEnv *, jobject, jstring);
+        (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -78,7 +113,7 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_replayWithUrl
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPull
-  (JNIEnv *, jobject);
+        (JNIEnv *, jobject);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -86,7 +121,7 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPull
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_startPlay
-  (JNIEnv *, jobject);
+        (JNIEnv *, jobject);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -103,7 +138,7 @@ JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isPullConnected
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPlay
-  (JNIEnv *, jobject);
+        (JNIEnv *, jobject);
 
 /*
  * Class:     com_today_im_IMMuxer
@@ -111,7 +146,9 @@ JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPlay
  * Signature: ()Lcom/today/im/PacketInfo;
  */
 JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
-  (JNIEnv *, jobject);
+        (JNIEnv *, jobject);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class PullerTask {
@@ -23,19 +24,22 @@ public class PullerTask {
 
     private IMMuxer imMuxer = new IMMuxer();
     private boolean isPlaying = false;
-    private PublisherListener publisherListener;
+    private PullerListener pullerListener;
     private AudioManager audioManager;
     private AudioRecord audioRecord;
     private LinkedBlockingDeque<byte[]> dataQueue = new LinkedBlockingDeque<>();
     private String url;
+    private String voipCode;
 
+    private int pullRequestCount = 0;
     private AudioTrack audioTrack = null;
     private int bufferSize = -1;
 
-    public PullerTask(AudioManager audioManager, PublisherListener publisherListener, String url) {
+    public PullerTask(AudioManager audioManager, PullerListener pullerListener, String url, String voipCode) {
         this.audioManager = audioManager;
-        this.publisherListener = publisherListener;
+        this.pullerListener = pullerListener;
         this.url = url;
+        this.voipCode = voipCode;
 
         bufferSize = AudioTrack.getMinBufferSize(Constants.SAMPLE_RATE, Constants.CHANNEL_OUT_MONO,
                 Constants.AUDIO_FORMAT);
@@ -43,6 +47,10 @@ public class PullerTask {
         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, Constants.SAMPLE_RATE,
                 Constants.CHANNEL_OUT_MONO, Constants.AUDIO_FORMAT, bufferSize,
                 AudioTrack.MODE_STREAM);
+    }
+
+    public PullerTask(AudioManager audioManager, PullerListener pullerListener, String voipCode) {
+        this(audioManager, pullerListener, "", voipCode);
     }
 
     public void start() {
@@ -56,9 +64,26 @@ public class PullerTask {
         handlerCollect.post(new Runnable() {
             @Override
             public void run() {
-                int result = imMuxer.pullWithUrl(playUrl);
+                String tempUrl = playUrl.substring(playUrl.indexOf("//") + 2);
+                String[] urlArray = tempUrl.split("/");
+                if (urlArray.length != 3) {
+                    return;
+                }
+                String[] ipHost = urlArray[0].split(":");
+                int port = Integer.parseInt(ipHost[1]);
+
+                UUID id = UUID.randomUUID();
+                pullRequestCount++;
+                String hash = String.format("%s/%s-%s-%d", id.toString(), urlArray[2], imMuxer.getSalt(), pullRequestCount);
+                String md5 = IMMuxer.md5(hash);
+                int result = imMuxer.pull(ipHost[0], port, urlArray[1], urlArray[2], id.toString(), md5);
+                Log.d(TAG, "imMuxer.pull result = " + result);
+
                 if (result == 1) {
                     collectData();
+                    uiUpdate();
+                } else {
+                    imMuxer.stopPull();
                 }
             }
         });
@@ -73,12 +98,16 @@ public class PullerTask {
             }
         });
 
+        uiUpdate();
+    }
+
+    private void uiUpdate() {
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        if (publisherListener != null) {
+        if (pullerListener != null) {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    publisherListener.onPublishStarted();
+                    pullerListener.onPullStarted();
                 }
             });
         }
@@ -92,11 +121,11 @@ public class PullerTask {
         audioTrack.release();
 
         final Handler uiHandler = new Handler(Looper.getMainLooper());
-        if (publisherListener != null) {
+        if (pullerListener != null) {
             uiHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    publisherListener.onPublishStopped();
+                    pullerListener.onPullStopped();
                 }
             });
         }
@@ -114,27 +143,31 @@ public class PullerTask {
 
     private void collectData() {
         while (isPlaying) {
-            PacketInfo packet = imMuxer.read();
-            if (packet == null) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            try {
+                PacketInfo packet = imMuxer.read();
+                if (packet == null) {
+                    Log.d(TAG, "接收到消息为空");
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    continue;
                 }
-                continue;
-            }
-            if (packet.packetType == Constants.MSG_SEND_AUDIO) {
-                byte[] data = packet.body;
-                byte[] newData = Arrays.copyOfRange(data, 1, data.length);
-                dataQueue.push(newData);
-                Log.d(TAG, "接收到消息包：size=" + packet.bodySize + ", 队列 size =" + dataQueue.size());
+                if (packet.packetType == Constants.MSG_SEND_AUDIO) {
+                    byte[] data = packet.body;
+                    byte[] newData = Arrays.copyOfRange(data, 1, data.length);
+                    dataQueue.push(newData);
+                    Log.d(TAG, "接收到消息包：size=" + packet.bodySize + ", 队列 size =" + dataQueue.size());
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "接收消息异常：", e);
             }
         }
     }
 
     private void playerData() {
-        final OpusUtils opusUtils = new OpusUtils();
-        final Long createDecoder = opusUtils.createDecoder(Constants.SAMPLE_RATE, Constants.CHANEL_IN_OPUS);
+        final Long createDecoder = OpusUtils.instance().createDecoder(Constants.SAMPLE_RATE, Constants.CHANEL_IN_OPUS);
 
         File file = new File(Constants.recorderFilePath);
         File fileDir = file.getParentFile();
@@ -155,7 +188,7 @@ public class PullerTask {
                 if (data != null) {
                     fileOpusBufferedOutputStream.write(data);//写入OPUS
                     short[] decodeBufferArray = new short[640];
-                    int size = opusUtils.decode(createDecoder, data, decodeBufferArray);
+                    int size = OpusUtils.instance().decode(createDecoder, data, decodeBufferArray);
                     if (size > 0) {
                         short[] decodeArray = new short[size];
                         System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
@@ -174,7 +207,7 @@ public class PullerTask {
             fileOpusBufferedOutputStream.close();
             fileOutputStream.close();
 
-            opusUtils.destroyDecoder(createDecoder);
+            OpusUtils.instance().destroyDecoder(createDecoder);
         } catch (IOException e) {
             e.printStackTrace();
         }

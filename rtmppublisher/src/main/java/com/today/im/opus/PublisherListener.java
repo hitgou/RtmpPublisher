@@ -3,12 +3,12 @@ package com.today.im.opus;
 public interface PublisherListener {
 
     /**
-     * Called when {@link Publisher} started publishing
+     * Called when {@link PublisherTask} started publishing
      */
     void onPublishStarted();
 
     /**
-     * Called when {@link Publisher} stopped publishing
+     * Called when {@link PublisherTask} stopped publishing
      */
     void onPublishStopped();
 

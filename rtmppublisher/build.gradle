@@ -5,14 +5,13 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 android {
-    compileSdkVersion COMPILE_SDK_VERSION as int
-    buildToolsVersion BUILD_TOOLS_VERSION
-
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
-        minSdkVersion MIN_SDK_VERSION as int
-        targetSdkVersion TARGET_SDK_VERSION as int
-        versionCode LIBRARY_VERSION_CODE as int
-        versionName LIBRARY_VERSION_NAME
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.appTargetSdkVersion
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
     }
 
     externalNativeBuild {
@@ -20,11 +19,15 @@ android {
             path "CMakeLists.txt"
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.android.support:appcompat-v7:$APP_COMPAT_VERSION"
+//    implementation "com.android.support:appcompat-v7:$APP_COMPAT_VERSION"
 //    implementation 'net.butterflytv.utils:rtmp-client:3.0.1'
     implementation project(':rtmp-client')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"

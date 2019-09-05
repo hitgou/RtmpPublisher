@@ -1,15 +1,17 @@
 package com.takusemba.rtmppublishersample
 
+import android.content.Context
+import android.content.Intent
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
-import android.support.v7.app.AppCompatActivity
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.today.im.opus.PublisherListener
 import com.today.im.opus.PublisherTask
 import com.today.im.opus.PullerListener
@@ -44,7 +46,7 @@ class PublishPullActivity() : AppCompatActivity(), PublisherListener, PullerList
         tvPull = findViewById<TextView>(R.id.tv_url_pull);
         tvPull.setText(url);
 
-        audioManager = getSystemService(AudioManager::class.java)
+        audioManager = baseContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         if (url.isBlank()) {
             Toast.makeText(this, R.string.error_empty_url, Toast.LENGTH_SHORT)
@@ -53,23 +55,44 @@ class PublishPullActivity() : AppCompatActivity(), PublisherListener, PullerList
         } else {
             publisherTask = PublisherTask(audioManager, this, url);
 
+            var url = "rtmp://47.106.33.6:9935/voip_relay/47.75.13.156-to-47.106.33.6-81";
+
             publishButton.setOnClickListener {
-                publisherTask.setUrl(tvPublish.text.toString())
-                if (publisherTask.isPublishing) {
-                    publisherTask.stop()
-                } else {
-                    publisherTask.start()
-                }
+                // 临时通话代码
+                val intent = Intent(this@PublishPullActivity, CallerPersonalActivity::class.java)
+                intent.putExtra("callType", 1)
+                intent.putExtra("caller", "aaa")
+                intent.putExtra("callerId", "1")
+                intent.putExtra("callee", "bbb")
+                intent.putExtra("calleeId", "2")
+                startActivity(intent)
+
+//                startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
+                //                publisherTask.setUrl(tvPublish.text.toString())
+//                publisherTask.setUrl(url)
+//                if (publisherTask.isPublishing) {
+//                    publisherTask.stop()
+//                } else {
+//                    publisherTask.start()
+//                }
             }
 
             pullerTask = PullerTask(audioManager, this, url)
             pullButton.setOnClickListener {
-                publisherTask.setUrl(tvPull.text.toString())
-                if (pullerTask.isPlaying) {
-                    pullerTask.stop()
-                } else {
-                    pullerTask.start()
-                }
+                val intent2 = Intent(this@PublishPullActivity, CallerPersonalActivity::class.java)
+                intent2.putExtra("callType", 2)
+                intent2.putExtra("caller", "aaa")
+                intent2.putExtra("callerId", "1")
+                intent2.putExtra("callee", "bbb")
+                intent2.putExtra("calleeId", "2")
+                startActivity(intent2)
+//                pullerTask.setUrl(url)
+////                pullerTask.setUrl(tvPull.text.toString())
+//                if (pullerTask.isPlaying) {
+//                    pullerTask.stop()
+//                } else {
+//                    pullerTask.start()
+//                }
             }
         }
     }

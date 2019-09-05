@@ -18,7 +18,13 @@ extern "C"{
 
 void initWithSampleRate(int sampleRate, int audioEncoder);
 
-int publishWithUrl(char *url);
+int publish(char *host, int port, char *app, char *path, char *guid, char *md5);
+
+int pull(char *host, int port, char *app, char *path, char *guid, char *md5);
+
+int publish1();
+
+//int publishWithUrl(char *url);
 
 void stopPublish();
 
@@ -42,7 +48,13 @@ void playAudioWithBuffer(char *data);
 
 RTMPPacket read();
 
+char *newGUID();
 
+char *dataWithHexString(char *voipCode);
+
+char *getCheckCodeData(char *data, int length);
+
+void checkCodeAudioData(char *data, int length);
 
 #ifdef __cplusplus
 }

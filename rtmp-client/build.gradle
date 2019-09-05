@@ -2,15 +2,13 @@ apply plugin: "com.android.library"
 
 
 android {
-    compileSdkVersion 27 // sdk level 21 lets ndk generate resources for archs such as arm64.
-    buildToolsVersion "28.0.3"
-
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
-        // applicationId "io.antmedia.rtmpclient"
-        minSdkVersion 21
-        targetSdkVersion 27
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.appTargetSdkVersion
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
