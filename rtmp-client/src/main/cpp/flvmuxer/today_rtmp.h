@@ -29,9 +29,9 @@ typedef unsigned char Byte;
 
 void initWithSampleRate(int sampleRate, int audioEncoder);
 
-int publish(char *host, int port, char *app, char *path, char *guid, char *md5, char *voipCode);
+int publish(char *host, int port, char *app, char *path, char *guid, char *md5);
 
-int pull(char *host, int port, char *app, char *path, char *guid, char *md5, char *voipCode);
+int pull(char *host, int port, char *app, char *path, char *guid, char *md5);
 
 int publish1();
 
@@ -61,11 +61,11 @@ RTMPPacket read();
 
 char *newGUID();
 
-char *dataWithHexString();
+char *dataWithHexString(char *voipCode);
 
-char *getCheckCodeData();
+char *getCheckCodeData(char *voipCode);
 
-void checkCodeAudioData(char *data, int length);
+void checkCodeAudioData(char *data, int length, char *voipCode);
 
 
 #ifdef __cplusplus

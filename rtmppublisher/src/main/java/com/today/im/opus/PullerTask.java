@@ -1,5 +1,7 @@
 package com.today.im.opus;
 
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
@@ -19,6 +21,9 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import static com.today.im.opus.PublisherTask.NUM_CHANNELS;
+import static com.today.im.opus.PublisherTask.SAMPLE_RATE;
+
 public class PullerTask {
     private final static String TAG = "PullerTask";
 
@@ -27,16 +32,22 @@ public class PullerTask {
     private PullerListener pullerListener;
     private AudioManager audioManager;
     private AudioRecord audioRecord;
-    private LinkedBlockingDeque<byte[]> dataQueue = new LinkedBlockingDeque<>();
+    private LinkedBlockingDeque<short[]> dataQueue = new LinkedBlockingDeque<>();
     private String url;
     private String voipCode;
 
     private int pullRequestCount = 0;
-    private AudioTrack audioTrack = null;
-    private int bufferSize = -1;
+//    private AudioTrack audioTrack = null;
 
     HandlerThread handlerCollectThread;
     HandlerThread handlerPublishThread;
+
+    private int bufferSize = AudioTrack.getMinBufferSize(Constants.SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+    private AudioAttributes audioAttributes = new AudioAttributes.Builder().setLegacyStreamType(AudioManager.STREAM_MUSIC).build();
+    private AudioFormat audioFormat = new AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+            .setSampleRate(Constants.SAMPLE_RATE).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build();
+    private int sessionId;
+
 
     public PullerTask(AudioManager audioManager, PullerListener pullerListener, String url, String voipCode) {
         this.audioManager = audioManager;
@@ -44,12 +55,14 @@ public class PullerTask {
         this.url = url;
         this.voipCode = voipCode;
 
-        bufferSize = AudioTrack.getMinBufferSize(Constants.SAMPLE_RATE, Constants.CHANNEL_OUT_MONO,
-                Constants.AUDIO_FORMAT);
+//        bufferSize = AudioTrack.getMinBufferSize(Constants.SAMPLE_RATE, Constants.CHANNEL_OUT_MONO,
+//                Constants.AUDIO_FORMAT);
+        sessionId = audioManager.generateAudioSessionId();
+//        audioTrack = new AudioTrack(audioAttributes, audioFormat, bufferSize, AudioTrack.MODE_STREAM, sessionId);
 
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, Constants.SAMPLE_RATE,
-                Constants.CHANNEL_OUT_MONO, Constants.AUDIO_FORMAT, bufferSize,
-                AudioTrack.MODE_STREAM);
+//        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, Constants.SAMPLE_RATE,
+//                Constants.CHANNEL_OUT_MONO, Constants.AUDIO_FORMAT, bufferSize,
+//                AudioTrack.MODE_STREAM);
     }
 
     public PullerTask(AudioManager audioManager, PullerListener pullerListener, String voipCode) {
@@ -58,7 +71,7 @@ public class PullerTask {
 
     public void start() {
         isPlaying = true;
-        audioTrack.play();
+//        audioTrack.play();
 
         handlerCollectThread = new HandlerThread("read");
         handlerCollectThread.start();
@@ -79,7 +92,7 @@ public class PullerTask {
                 pullRequestCount++;
                 String hash = String.format("%s/%s-%s-%d", id.toString(), urlArray[2], imMuxer.getSalt(), pullRequestCount);
                 String md5 = IMMuxer.md5(hash);
-                int result = imMuxer.pull(ipHost[0], port, urlArray[1], urlArray[2], id.toString(), md5, voipCode);
+                int result = imMuxer.pull(ipHost[0], port, urlArray[1], urlArray[2], id.toString(), md5);
                 Log.d(TAG, "imMuxer.pull result = " + result);
 
                 if (result == 1) {
@@ -91,15 +104,15 @@ public class PullerTask {
             }
         });
 
-        handlerPublishThread = new HandlerThread("play");
-        handlerPublishThread.start();
-        Handler handlerPublish = new Handler(handlerPublishThread.getLooper());
-        handlerPublish.post(new Runnable() {
-            @Override
-            public void run() {
-                playerData();
-            }
-        });
+//        handlerPublishThread = new HandlerThread("play");
+//        handlerPublishThread.start();
+//        Handler handlerPublish = new Handler(handlerPublishThread.getLooper());
+//        handlerPublish.post(new Runnable() {
+//            @Override
+//            public void run() {
+//                playerData();
+//            }
+//        });
 
         uiUpdate();
     }
@@ -118,8 +131,10 @@ public class PullerTask {
 
     public void stop() {
         isPlaying = false;
-        audioTrack.stop();
-        audioTrack.release();
+//        if (audioTrack != null && audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
+//            audioTrack.stop();
+//        }
+//        audioTrack.release();
         if (handlerPublishThread != null) {
             handlerPublishThread.interrupt();
         }
@@ -156,77 +171,117 @@ public class PullerTask {
     }
 
     private void collectData() {
-        int times = 0;
-        while (isPlaying && times < 3) {
-            times++;
-            try {
-                PacketInfo packet = imMuxer.read();
-                if (packet == null) {
-                    Log.d(TAG, "接收到消息为空");
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+        File fileOpus = new File(Constants.pullRecorderOpusFilePath);
+        File filePCM = new File(Constants.pullRecorderPcmFilePath);
+        File fileDir = fileOpus.getParentFile();
+        if (!fileDir.exists()) {
+            fileDir.mkdirs();
+        }
+        if (fileOpus.exists()) {
+            fileOpus.delete();
+        }
+        if (filePCM.exists()) {
+            filePCM.delete();
+        }
+
+        try {
+            fileOpus.createNewFile();
+            filePCM.createNewFile();
+            FileOutputStream fileOpusOutputStream = new FileOutputStream(fileOpus, true);
+            FileOutputStream filePCMOutputStream = new FileOutputStream(filePCM, true);
+            BufferedOutputStream fileOpusBufferedOutputStream = new BufferedOutputStream(fileOpusOutputStream);
+            BufferedOutputStream filePCMBufferedOutputStream = new BufferedOutputStream(filePCMOutputStream);
+
+            int minBufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
+                    NUM_CHANNELS == 1 ? AudioFormat.CHANNEL_IN_MONO : AudioFormat.CHANNEL_IN_STEREO,
+                    AudioFormat.ENCODING_PCM_16BIT);
+            // init audio track
+            AudioTrack track = new AudioTrack(AudioManager.STREAM_SYSTEM,
+                    SAMPLE_RATE,
+                    NUM_CHANNELS == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    minBufSize,
+                    AudioTrack.MODE_STREAM);
+            track.play();
+
+            int times = 0;
+//            final Long createDecoder = OpusUtils.instance().createDecoder(Constants.SAMPLE_RATE, Constants.CHANEL_IN_OPUS, 8);
+            final Long createDecoder = OpusUtils.instance().initDecoder(Constants.SAMPLE_RATE, Constants.CHANEL_IN_OPUS);
+            while (isPlaying) {
+                try {
+                    PacketInfo packet = imMuxer.read(voipCode);
+                    if (packet == null) {
+                        Log.d(TAG, "接收到消息为空");
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        continue;
                     }
-                    continue;
+                    times++;
+                    if (packet.packetType == Constants.MSG_SEND_AUDIO) {
+                        byte[] data = packet.body;
+//                        fileOpusBufferedOutputStream.write(data);//写入OPUS
+
+                        short[] decodeBufferArray = new short[640];
+                        int size = OpusUtils.instance().decode(createDecoder, data, decodeBufferArray);
+//                        int size = OpusUtils.instance().de.decode(createDecoder, data, decodeBufferArray);
+                        if (size > 0) {
+                            short[] decodeArray = new short[size];
+                            System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
+//                            dataQueue.push(decodeArray);
+
+                            track.write(decodeArray, 0, decodeArray.length * NUM_CHANNELS);
+
+//                            fileOpusBufferedOutputStream.write(IMUtils.INSTANCE.shortArrayToByteArray(decodeBufferArray));//写入OPUS
+//                            filePCMBufferedOutputStream.write(IMUtils.INSTANCE.shortArrayToByteArray(decodeArray));//写入OPUS
+                            Log.d(TAG, "接收到消息包 decodeArray length=" + decodeArray.length + "：size=" + packet.bodySize + ", 队列 size =" + dataQueue.size());
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.d(TAG, "接收消息异常：", e);
                 }
-                if (packet.packetType == Constants.MSG_SEND_AUDIO) {
-                    byte[] data = packet.body;
-                    byte[] newData = Arrays.copyOfRange(data, 0, data.length);
-                    dataQueue.push(newData);
-                    Log.d(TAG, "接收到消息包 times=" + times + "：size=" + packet.bodySize + ", 队列 size =" + dataQueue.size() + "，data=" + Arrays.toString(data));
-                }
-            } catch (Exception e) {
-                Log.d(TAG, "接收消息异常：", e);
             }
+
+            track.stop();
+            track.release();
+
+            OpusUtils.instance().destroyDecoder(createDecoder);
+
+            fileOpusBufferedOutputStream.close();
+            fileOpusOutputStream.close();
+            filePCMBufferedOutputStream.close();
+            filePCMOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     private void playerData() {
-        final Long createDecoder = OpusUtils.instance().createDecoder(Constants.SAMPLE_RATE, Constants.CHANEL_IN_OPUS);
+        int minBufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
+                NUM_CHANNELS == 1 ? AudioFormat.CHANNEL_IN_MONO : AudioFormat.CHANNEL_IN_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT);
+        // init audio track
+        AudioTrack track = new AudioTrack(AudioManager.STREAM_SYSTEM,
+                SAMPLE_RATE,
+                NUM_CHANNELS == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                minBufSize,
+                AudioTrack.MODE_STREAM);
+        track.play();
 
-        File file = new File(Constants.recorderFilePath);
-        File fileDir = file.getParentFile();
-        if (!fileDir.exists()) {
-            fileDir.mkdirs();
-        }
-        if (file.exists()) {
-            file.delete();
-        }
-
-        try {
-            file.createNewFile();
-            FileOutputStream fileOutputStream = new FileOutputStream(file, true);
-            BufferedOutputStream fileOpusBufferedOutputStream = new BufferedOutputStream(fileOutputStream);
-
-            while (isPlaying) {
-                byte[] data = dataQueue.poll();
-                if (data != null) {
-                    fileOpusBufferedOutputStream.write(data);//写入OPUS
-                    short[] decodeBufferArray = new short[640];
-                    int size = OpusUtils.instance().decode(createDecoder, data, decodeBufferArray);
-                    if (size > 0) {
-                        short[] decodeArray = new short[size];
-                        System.arraycopy(decodeBufferArray, 0, decodeArray, 0, size);
-                        audioTrack.write(decodeArray, 0, decodeArray.length);
-                    }
-//                    audioTrack.write(data, 0, data.length);
-                } else {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+        while (isPlaying) {
+            try {
+                short[] data = dataQueue.take();
+                track.write(data, 0, data.length * NUM_CHANNELS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-
-            fileOpusBufferedOutputStream.close();
-            fileOutputStream.close();
-
-            OpusUtils.instance().destroyDecoder(createDecoder);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
+        track.stop();
+        track.release();
     }
 
 

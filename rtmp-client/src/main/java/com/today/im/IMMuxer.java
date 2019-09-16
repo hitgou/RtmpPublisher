@@ -44,34 +44,20 @@ public class IMMuxer {
         return "6291D258227040D0A53203C1C5225275";
     }
 
-//    public native String getSalt();
-
-    public native Object initWithSampleRate(int sampleRate, int audioEncoder);
-
-    public native void stopCalled();
-
-    public native int publish(String host, int port, String app, String path, String id, String md5, String voipCode);
-
-    public native int publish1();
+    public native int publish(String host, int port, String app, String path, String id, String md5);
 
     public native void stopPublish();
 
-    public native int pull(String host, int port, String app, String path, String id, String md5, String voipCode);
-
-//    public native int publish();
-
     public native int isPublishConnected();
 
-    public native int write(byte[] data, int type, int length, int timestamp);
-
-    public native int pullWithUrl(String rtmpURL);
-
-    public native void replayWithUrl(String rtmpURL);
+    public native int pull(String host, int port, String app, String path, String id, String md5);
 
     public native void stopPull();
 
     public native int isPullConnected();
 
-    public native PacketInfo read();
+    public native int write(byte[] data, int type, int length, int timestamp, String voipCode);
+
+    public native PacketInfo read(String voipCode);
 
 }

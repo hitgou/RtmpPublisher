@@ -23,130 +23,29 @@ Java_com_today_im_IMMuxer_getSalt(JNIEnv *env, jobject instance) {
 
 JNIEXPORT jint JNICALL
 Java_com_today_im_IMMuxer_publish(JNIEnv *, jobject, jstring, jint,
-                                  jstring, jstring, jstring, jstring, jstring);
+                                  jstring, jstring, jstring, jstring);
 
-JNIEXPORT jint JNICALL
-Java_com_today_im_IMMuxer_pull(JNIEnv *, jobject, jstring, jint,
-                               jstring, jstring, jstring, jstring, jstring);
-
-
-JNIEXPORT jint JNICALL
-Java_com_today_im_IMMuxer_publish1(JNIEnv *, jobject);
-
-
-JNIEXPORT jint JNICALL
-Java_com_today_im_IMMuxer_pullInit(JNIEnv *, jobject, jstring, jstring,
-                                   jstring, jstring, jstring, jstring);
-
-
-JNIEXPORT jint JNICALL
-Java_com_today_im_IMMuxer_pull1(JNIEnv *, jobject);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    initWithSampleRate
- * Signature: (II)Ljava/lang/Object;
- */
-JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_initWithSampleRate
-        (JNIEnv *, jobject, jint, jint);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    stopCalled
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopCalled
-        (JNIEnv *, jobject);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    publishWithUrl
- * Signature: (Ljava/lang/String;)I
- */
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_publishWithUrl
-        (JNIEnv *, jobject, jstring);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    stopPublish
- * Signature: ()V
- */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPublish
         (JNIEnv *, jobject);
 
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    isConnected
- * Signature: ()I
- */
 JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isPublishConnected
         (JNIEnv *, jobject);
 
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    write
- * Signature: ([BIII)I
- */
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
-        (JNIEnv *, jobject, jbyteArray, jint, jint, jint);
+JNIEXPORT jint JNICALL
+Java_com_today_im_IMMuxer_pull(JNIEnv *, jobject, jstring, jint,
+                               jstring, jstring, jstring, jstring);
 
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    pullWithUrl
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_pullWithUrl
-        (JNIEnv *, jobject, jstring);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    replayWithUrl
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_replayWithUrl
-        (JNIEnv *, jobject, jstring);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    stopPull
- * Signature: ()V
- */
 JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPull
         (JNIEnv *, jobject);
 
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    startPlay
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_startPlay
-        (JNIEnv *, jobject);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    isConnected
- * Signature: ()I
- */
 JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_isPullConnected
         (JNIEnv *, jobject);
 
+JNIEXPORT jint JNICALL Java_com_today_im_IMMuxer_write
+        (JNIEnv *, jobject, jbyteArray, jint, jint, jint, jstring);
 
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    stopPull
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_com_today_im_IMMuxer_stopPlay
-        (JNIEnv *, jobject);
-
-/*
- * Class:     com_today_im_IMMuxer
- * Method:    read
- * Signature: ()Lcom/today/im/PacketInfo;
- */
 JNIEXPORT jobject JNICALL Java_com_today_im_IMMuxer_read
-        (JNIEnv *, jobject);
+        (JNIEnv *, jobject, jstring);
 
 
 #ifdef __cplusplus

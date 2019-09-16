@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'com.jfrog.bintray'
+//apply plugin: 'com.github.dcendents.android-maven'
+//apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -41,56 +41,56 @@ def getBintrayApiKeyProperty() {
     return hasProperty('bintrayApiKey') ? bintrayApiKey : ""
 }
 
-bintray {
+//bintray {
+//
+//    user = bintrayUserProperty
+//    key = bintrayApiKeyProperty
+//
+//    group = GROUP
+//    version = LIBRARY_VERSION_NAME
+//    configurations = ['archives']
+//    pkg {
+//        repo = POM_REPO
+//        name = POM_NAME
+//        desc = POM_DESCRIPTION
+//        websiteUrl = POM_URL
+//        issueTrackerUrl = ISSUE_URL
+//        vcsUrl = POM_SCM_URL
+//        licenses = ['Apache-2.0']
+//        labels = ['android']
+//        publicDownloadNumbers = true
+//    }
+//}
 
-    user = bintrayUserProperty
-    key = bintrayApiKeyProperty
-
-    group = GROUP
-    version = LIBRARY_VERSION_NAME
-    configurations = ['archives']
-    pkg {
-        repo = POM_REPO
-        name = POM_NAME
-        desc = POM_DESCRIPTION
-        websiteUrl = POM_URL
-        issueTrackerUrl = ISSUE_URL
-        vcsUrl = POM_SCM_URL
-        licenses = ['Apache-2.0']
-        labels = ['android']
-        publicDownloadNumbers = true
-    }
-}
-
-install {
-    repositories.mavenInstaller {
-        pom {
-            project {
-                packaging 'aar'
-                name ARTIFACT_ID
-                url POM_URL
-                licenses {
-                    license {
-                        name POM_LICENSE_NAME
-                        url POM_LICENSE_URL
-                    }
-                }
-                developers {
-                    developer {
-                        id POM_DEVELOPER_ID
-                        name POM_DEVELOPER_NAME
-                        email POM_DEVELOPER_EMAIL
-                    }
-                }
-                scm {
-                    connection POM_SCM_CONNECTION
-                    developerConnection POM_SCM_CONNECTION
-                    url POM_URL
-                }
-            }
-        }
-    }
-}
+//install {
+//    repositories.mavenInstaller {
+//        pom {
+//            project {
+//                packaging 'aar'
+//                name ARTIFACT_ID
+//                url POM_URL
+//                licenses {
+//                    license {
+//                        name POM_LICENSE_NAME
+//                        url POM_LICENSE_URL
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        id POM_DEVELOPER_ID
+//                        name POM_DEVELOPER_NAME
+//                        email POM_DEVELOPER_EMAIL
+//                    }
+//                }
+//                scm {
+//                    connection POM_SCM_CONNECTION
+//                    developerConnection POM_SCM_CONNECTION
+//                    url POM_URL
+//                }
+//            }
+//        }
+//    }
+//}
 
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs

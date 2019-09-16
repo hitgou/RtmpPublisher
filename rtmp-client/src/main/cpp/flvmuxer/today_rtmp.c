@@ -39,7 +39,6 @@ static uint64_t g_time_begin;
 
 //RTMP *rtmp;
 bool isMuted;
-char *voipCode;
 char *checkCodeData;
 float upLoadDataSize;
 float downLoadDataSize;
@@ -57,8 +56,7 @@ int pullCount;
 
 
 int publish(char *host, int port, char *app, char *path, char *guid,
-            char *md5, char *voipCode_) {
-    voipCode = voipCode_;
+            char *md5) {
     publishRTMP = RTMP_Alloc();
     if (publishRTMP == NULL) {
         return -1;
@@ -97,8 +95,7 @@ int publish(char *host, int port, char *app, char *path, char *guid,
     return 1;
 }
 
-int pull(char *host, int port, char *app, char *path, char *guid, char *md5, char *voipCode_) {
-    voipCode = voipCode_;
+int pull(char *host, int port, char *app, char *path, char *guid, char *md5) {
     pullRTMP = RTMP_Alloc();
     if (pullRTMP == NULL) {
         return -1;
@@ -321,7 +318,7 @@ char *newGUID() {
     return (const char *) buf;
 }
 
-char *dataWithHexString() {
+char *dataWithHexString(char *voipCode) {
     int len = sizeof(voipCode);
     if (len == 0) return NULL;
 
@@ -335,35 +332,27 @@ char *dataWithHexString() {
         bytes = strtol(str, NULL, 16);
         memcpy(result + i, &bytes, sizeof(char));
     }
-    return result;
+    return result; // 7'u@
 }
 
-char *getCheckCodeData() {
+char *getCheckCodeData(char *voipCode) {
     if (!checkCodeData) {
-        checkCodeData = dataWithHexString();
+        checkCodeData = dataWithHexString(voipCode);
     }
     return checkCodeData;
 }
 
 #define key_Length 4
 
-void checkCodeAudioData(char *audioData, int audioLength) {
-    char *keyData = getCheckCodeData();
+void checkCodeAudioData(char *audioData, int audioLength, char *voipCode) {
+    char *keyData = getCheckCodeData(voipCode);
     if (!audioLength && keyData && !audioLength) {
         return;
     }
-
-    __android_log_print(ANDROID_LOG_DEBUG, TAG, "hello native log");
-
-    LOGD("第一次异或编码");
     long i = 0;
     for (i = 0; i < audioLength; i++) {
         int l = i % key_Length;
-        char c = keyData[l];
-//        char c = 'a';
-        char s = audioData[i];
-        char result = s ^c;
-        audioData[i] = (Byte) result;
+        audioData[i] = audioData[i] ^ keyData[l];
 //        LOGD("l=%d, c=%c, s=%c, result=%c, resultSecond=%c", l, c, s, result, resultSecond);
     }
 }

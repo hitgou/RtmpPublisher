@@ -9,26 +9,53 @@
 extern "C" {
 #endif
 
+
+JNIEXPORT jlong JNICALL
+Java_com_today_im_opus_OpusUtils_initEncoder(JNIEnv *env, jobject instance, jint samplingRate,
+                                             jint numberOfChannels, jint application) {
+    int error;
+    int size;
+
+    size = opus_encoder_get_size(1);
+    OpusEncoder *enc = (OpusEncoder *) malloc(size);
+    error = opus_encoder_init(enc, samplingRate, numberOfChannels, OPUS_APPLICATION_VOIP);
+    if (error) {
+        free(enc);
+        return 0;
+    }
+//    opus_encoder_ctl(enc, OPUS_SET_BITRATE(32000));
+
+    return (jlong) enc;
+}
+
+
+JNIEXPORT jlong JNICALL
+Java_com_today_im_opus_OpusUtils_initDecoder(JNIEnv *env, jobject instance, jint samplingRate,
+                                             jint numberOfChannels) {
+    int size;
+    int error;
+
+    size = opus_decoder_get_size(numberOfChannels);
+    OpusDecoder *dec = (OpusDecoder *) malloc(size);
+    error = opus_decoder_init(dec, samplingRate, numberOfChannels);
+    if (error) {
+        free(dec);
+        return 0;
+    }
+
+    return (jlong) dec;
+}
+
+
 JNIEXPORT jlong JNICALL Java_com_today_im_opus_OpusUtils_createEncoder
         (JNIEnv *env, jobject thiz, jint sampleRateInHz, jint channelConfig, jint complexity) {
     int error;
     OpusEncoder *pOpusEnc = opus_encoder_create(sampleRateInHz, channelConfig,
                                                 OPUS_APPLICATION_VOIP, &error);
-    if (pOpusEnc) {
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_VBR(0));//0:CBR, 1:VBR
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_VBR_CONSTRAINT(true));
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_BITRATE(16000));
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_COMPLEXITY(complexity));//8    0~10
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_SIGNAL(OPUS_SIGNAL_VOICE));
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_LSB_DEPTH(16));
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_DTX(0));
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_INBAND_FEC(0));
-        opus_encoder_ctl(pOpusEnc, OPUS_SET_PACKET_LOSS_PERC(0));
-    }
     return (jlong) pOpusEnc;
 }
 JNIEXPORT jlong JNICALL Java_com_today_im_opus_OpusUtils_createDecoder
-        (JNIEnv *env, jobject thiz, jint sampleRateInHz, jint channelConfig) {
+        (JNIEnv *env, jobject thiz, jint sampleRateInHz, jint channelConfig, jint complexity) {
     int error;
     OpusDecoder *pOpusDec = opus_decoder_create(sampleRateInHz, channelConfig, &error);
     return (jlong) pOpusDec;
@@ -44,59 +71,43 @@ JNIEXPORT jint JNICALL Java_com_today_im_opus_OpusUtils_encode
     jshort *pSamples = env->GetShortArrayElements(buffer, 0);
     jsize nSampleSize = env->GetArrayLength(buffer);
     jbyte *pBytes = env->GetByteArrayElements(bytes, 0);
-    // jsize nByteSize = env->GetArrayLength(bytes);
+    jsize nByteSize = env->GetArrayLength(bytes);
     //if (nSampleSize - offset < 320 || nByteSize <= 0)
-    if (nSampleSize - offset < 320)
-        return 0;
+//    if (nSampleSize - offset < 320)
+//        return 0;
     int nRet = opus_encode(pEnc, pSamples + offset, nSampleSize, (unsigned char *) pBytes,
-                           1280);
+                           nByteSize);
     env->ReleaseShortArrayElements(buffer, pSamples, 0);
     env->ReleaseByteArrayElements(bytes, pBytes, 0);
     return nRet;
-
-
-//    //读取参数 数组
-//    (*env)->GetShortArrayRegion(env, buffer, offset, size, out);
-//    nbBytes = opus_encode(pEnc, out, size, cbits, 480);
-//    //设定压缩完的数据到数组中
-//    (*env)->SetByteArrayRegion(env, buffer, 0, nbBytes, (jshort *) cbits);
-
-//    return nbBytes;
-//    jsize lengthOfShorts = env->GetArrayLength(buffer);
-//    jint frame_size = lengthOfShorts / sizeof(short);
-//    short input_frame[frame_size];
-//    memcpy(input_frame, buffer, lengthOfShorts);
-
-//    jshort *pSamples = env->GetShortArrayElements(buffer, 0);
-
-//    jbyte *pBytes = env->GetByteArrayElements(bytes, 0);
-//    jsize nByteSize = env->GetArrayLength(bytes);
-//    if (lengthOfShorts - offset < 320 || nByteSize <= 0)
-//        return 0;
-
-//    int max_data_bytes = 2 * 640;
-//    int ret = opus_encode(pEnc, input_frame, lengthOfShorts, (unsigned char *) pBytes,
-//                          max_data_bytes);
-//    env->ReleaseShortArrayElements(buffer, pSamples, 0);
-//    env->ReleaseByteArrayElements(bytes, pBytes, 0);
-
-//    return ret;
-
-//    opus_encode(OpusEncoder *st, const opus_int16 *pcm, int frame_size, unsigned char *data, opus_int32 max_data_bytes
-//
-//(short *)pcmBuffer length:(NSInteger)lengthOfShorts
-//    int frame_size = (int)lengthOfShorts / sizeof(short);//WB_FRAME_SIZE;
-//    short input_frame[frame_size];
-//    opus_int32 max_data_bytes = 2 * WB_FRAME_SIZE ;//随便设大,此时为原始PCM大小
-//    memcpy(input_frame, pcmBuffer, lengthOfShorts );//frame_size * sizeof(short)
-//    int encodeBack = opus_encode(enc, input_frame, frame_size, opus_data_encoder, max_data_bytes);
-//    if (encodeBack > 0) {
-//        NSData *decodedData = [NSData dataWithBytes:opus_data_encoder length:encodeBack];
-//        return decodedData;
-//    } else {
-//        return nil;
-//    }
 }
+
+
+JNIEXPORT jint JNICALL Java_com_today_im_opus_OpusUtils_encodeByte
+        (JNIEnv *env, jobject thiz, jlong pOpusEnc, jbyteArray in, jint frames,
+         jbyteArray out) {
+    OpusEncoder *enc = (OpusEncoder *) pOpusEnc;
+    if (!enc || !in || !out)
+        return 0;
+
+    jint outputArraySize = env->GetArrayLength(out);
+    jbyte *audioSignal = env->GetByteArrayElements(in, 0);
+    jbyte *encodedSignal = env->GetByteArrayElements(out, 0);
+
+    if (((unsigned long) audioSignal) % 2) {
+        // Unaligned...
+        return OPUS_BAD_ARG;
+    }
+
+    int dataArraySize = opus_encode(enc, (const opus_int16 *) audioSignal, frames,
+                                    (unsigned char *) encodedSignal, outputArraySize);
+
+    env->ReleaseByteArrayElements(in, audioSignal, JNI_ABORT);
+    env->ReleaseByteArrayElements(out, encodedSignal, 0);
+
+    return dataArraySize;
+}
+
 
 JNIEXPORT jint JNICALL Java_com_today_im_opus_OpusUtils_decode
         (JNIEnv *env, jobject thiz, jlong pOpusDec, jbyteArray bytes,
@@ -116,6 +127,25 @@ JNIEXPORT jint JNICALL Java_com_today_im_opus_OpusUtils_decode
     env->ReleaseByteArrayElements(bytes, pBytes, 0);
     return nRet;
 }
+
+JNIEXPORT jint JNICALL
+Java_com_today_im_opus_OpusUtils_decodeShorts(JNIEnv *env, jobject instance, jlong pOpusDec,
+                                              jbyteArray in_, jshortArray out_, jint frames) {
+    OpusDecoder *dec = (OpusDecoder *) pOpusDec;
+
+    jint inputArraySize = env->GetArrayLength(in_);
+
+    jbyte *encodedData = env->GetByteArrayElements(in_, 0);
+    jshort *decodedData = env->GetShortArrayElements(out_, 0);
+    int samples = opus_decode(dec, (const unsigned char *) encodedData, inputArraySize,
+                              decodedData, frames, 0);
+
+    env->ReleaseByteArrayElements(in_, encodedData, JNI_ABORT);
+    env->ReleaseShortArrayElements(out_, decodedData, 0);
+
+    return samples;
+}
+
 JNIEXPORT void JNICALL Java_com_today_im_opus_OpusUtils_destroyEncoder
         (JNIEnv *env, jobject thiz, jlong pOpusEnc) {
     OpusEncoder *pEnc = (OpusEncoder *) pOpusEnc;
@@ -123,6 +153,7 @@ JNIEXPORT void JNICALL Java_com_today_im_opus_OpusUtils_destroyEncoder
         return;
     opus_encoder_destroy(pEnc);
 }
+
 JNIEXPORT void JNICALL Java_com_today_im_opus_OpusUtils_destroyDecoder
         (JNIEnv *env, jobject thiz, jlong pOpusDec) {
     OpusDecoder *pDec = (OpusDecoder *) pOpusDec;
