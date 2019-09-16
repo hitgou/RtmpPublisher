@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.today.im.IMMuxer;
 
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -28,6 +29,10 @@ public class PublisherTask {
     private int publishRequestCount = 0;
     private int pullRequestCount = 0;
     private Object waitObject = new Object();
+    private String voipCode;
+
+    HandlerThread handlerCollectThread;
+    HandlerThread handlerPublishThread;
 
     public PublisherTask(AudioManager audioManager, PublisherListener publisherListener, String url) {
         this.audioManager = audioManager;
@@ -44,7 +49,7 @@ public class PublisherTask {
         isPublishing = true;
         timestamp = 0;
 
-        HandlerThread handlerCollectThread = new HandlerThread("collect");
+        handlerCollectThread = new HandlerThread("collect");
         handlerCollectThread.start();
         Handler handlerCollect = new Handler(handlerCollectThread.getLooper());
         final String publishUrl = this.url;
@@ -64,7 +69,7 @@ public class PublisherTask {
                 publishRequestCount++;
                 String hash = String.format("%s/%s-%s-%d", id.toString(), urlArray[2], imMuxer.getSalt(), publishRequestCount);
                 String md5 = IMMuxer.md5(hash);
-                int result = imMuxer.publish(ipHost[0], port, urlArray[1], urlArray[2], id.toString(), md5);
+                int result = imMuxer.publish(ipHost[0], port, urlArray[1], urlArray[2], id.toString(), md5, voipCode);
                 Log.d(TAG, "imMuxer.publish result = " + result);
                 if (result == 1) {
                     final int bufferSize = AudioRecord.getMinBufferSize(Constants.SAMPLE_RATE, Constants.CHANEL_IN, Constants.AUDIO_FORMAT);
@@ -78,7 +83,7 @@ public class PublisherTask {
             }
         });
 
-        HandlerThread handlerPublishThread = new HandlerThread("publish");
+        handlerPublishThread = new HandlerThread("publish");
         handlerPublishThread.start();
         Handler handlerPublish = new Handler(handlerPublishThread.getLooper());
         handlerPublish.post(new Runnable() {
@@ -101,38 +106,49 @@ public class PublisherTask {
 
     public void stop() {
         isPublishing = false;
-        timestamp = 0;
-        imMuxer.stopPublish();
         isMute = false;
-        synchronized (waitObject) {
-            waitObject.notify();
+        timestamp = 0;
+        dataQueue.clear();
+        if (handlerPublishThread != null) {
+            handlerPublishThread.interrupt();
         }
-
-        if (isRecording()) {
+        if (handlerCollectThread != null) {
+            handlerCollectThread.interrupt();
+        }
+        if (isRecording() && audioRecord != null) {
             audioRecord.stop();
             audioRecord.release();
             audioRecord = null;
         }
+        synchronized (waitObject) {
+            waitObject.notify();
+        }
+        // RTMP 最后延时 100 s停止，防止rtmp协议还在读取数据，但是 rtmp 已经为空的问题
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                imMuxer.stopPublish();
+            }
+        }, 100);
 
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         if (publisherListener != null) {
-            uiHandler.post(new Runnable() {
+            uiHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     publisherListener.onPublishStopped();
                 }
-            });
+            }, 500);
         }
-
-        dataQueue.clear();
     }
 
     public boolean isPublishing() {
         return isPublishing;
     }
 
-    public void setUrl(String url) {
+    public void setUrl(String url, String voipCode) {
         this.url = url;
+        this.voipCode = voipCode;
     }
 
     public void setMute(boolean isMute) {
@@ -165,10 +181,30 @@ public class PublisherTask {
                     if (encodeSize > 0) {
                         byte[] decodeArray = new byte[encodeSize];
                         System.arraycopy(byteArray, 0, decodeArray, 0, encodeSize);
+//                    byte[] byteArray = {75, 65, 0, 45, 105, 46, -105, 38, 19, 83, 126, -27, 44, 34, 12, -112, -42, -105, -113
+//                            , -96, 90, 16, 86, -68, -23, 87, -14, 70, 16, 125, -53, -5, 84, -53, 14, -33, -93, 0, -95, 35};
+//                    byte[] byteArray = {75, 65, 0, 45, 105, 46, 105, 38, 19, 83, 126, 27, 44, 34, 12, 112, 42, 105, 113
+//                            , 96, 90, 16, 86, 68, 23, 87, 14, 70, 16, 125, 53, 5, 84, 53, 14, 33, 93, 0, 95, 35};
+//                    byte c = 50;
+//                    for (int i = 0; i < byteArray.length; i++) {
+//                        byte sss = byteArray[i];
+//                        byte a = (byte) (sss ^ c ^ c);
+//                        byteArray[i] = a;
+//                    }
+//                    String s = "";
+//                    for (int i = 0; i < byteArray.length; i++) {
+//                        s += byteToChar(byteArray[i]);
+//                    }
+
+//                    String input = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnop";
+//                    byteArray = input.getBytes();
+
+//                    byte[] ccc = charToByte('s');
+
+                        Log.d(TAG, "消息采样包 size=" + decodeArray.length + "，decodeArray=" + Arrays.toString(decodeArray));
+
                         dataQueue.push(decodeArray);
-                        Log.d(TAG, "消息采样包：size=" + decodeArray.length + ", 队列 size =" + dataQueue.size());
-//                    dataQueue.push(audioBuffer);
-//                    } else {
+//                    Log.d(TAG, "消息采样包：size=" + byteArray.length + ", 队列 size =" + dataQueue.size());
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "启动发送出错", e);

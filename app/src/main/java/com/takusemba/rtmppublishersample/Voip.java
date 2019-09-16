@@ -52,7 +52,8 @@ public class Voip {
 
     static {
 //        VOIP_ADDRESS = "https://" + getIp("imtest.testby.xyz") + ":9980/";
-        VOIP_ADDRESS = "https://imtest.testby.xyz";
+//        VOIP_ADDRESS = "https://imtest.testby.xyz";
+        VOIP_ADDRESS = "http://47.106.33.6:9980";
     }
 
     /**

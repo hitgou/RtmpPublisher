@@ -35,6 +35,9 @@ public class PullerTask {
     private AudioTrack audioTrack = null;
     private int bufferSize = -1;
 
+    HandlerThread handlerCollectThread;
+    HandlerThread handlerPublishThread;
+
     public PullerTask(AudioManager audioManager, PullerListener pullerListener, String url, String voipCode) {
         this.audioManager = audioManager;
         this.pullerListener = pullerListener;
@@ -57,7 +60,7 @@ public class PullerTask {
         isPlaying = true;
         audioTrack.play();
 
-        HandlerThread handlerCollectThread = new HandlerThread("read");
+        handlerCollectThread = new HandlerThread("read");
         handlerCollectThread.start();
         Handler handlerCollect = new Handler(handlerCollectThread.getLooper());
         final String playUrl = this.url;
@@ -76,7 +79,7 @@ public class PullerTask {
                 pullRequestCount++;
                 String hash = String.format("%s/%s-%s-%d", id.toString(), urlArray[2], imMuxer.getSalt(), pullRequestCount);
                 String md5 = IMMuxer.md5(hash);
-                int result = imMuxer.pull(ipHost[0], port, urlArray[1], urlArray[2], id.toString(), md5);
+                int result = imMuxer.pull(ipHost[0], port, urlArray[1], urlArray[2], id.toString(), md5, voipCode);
                 Log.d(TAG, "imMuxer.pull result = " + result);
 
                 if (result == 1) {
@@ -88,7 +91,7 @@ public class PullerTask {
             }
         });
 
-        HandlerThread handlerPublishThread = new HandlerThread("play");
+        handlerPublishThread = new HandlerThread("play");
         handlerPublishThread.start();
         Handler handlerPublish = new Handler(handlerPublishThread.getLooper());
         handlerPublish.post(new Runnable() {
@@ -115,34 +118,47 @@ public class PullerTask {
 
     public void stop() {
         isPlaying = false;
-        imMuxer.stopPull();
-
         audioTrack.stop();
         audioTrack.release();
+        if (handlerPublishThread != null) {
+            handlerPublishThread.interrupt();
+        }
+        if (handlerCollectThread != null) {
+            handlerCollectThread.interrupt();
+        }
+        dataQueue.clear();
+        // RTMP 最后延时 100 s停止，防止rtmp协议还在读取数据，但是 rtmp 已经为空的问题
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                imMuxer.stopPull();
+            }
+        }, 100);
 
         final Handler uiHandler = new Handler(Looper.getMainLooper());
         if (pullerListener != null) {
-            uiHandler.post(new Runnable() {
+            uiHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     pullerListener.onPullStopped();
                 }
-            });
+            }, 500);
         }
-
-        dataQueue.clear();
     }
 
     public boolean isPlaying() {
         return isPlaying;
     }
 
-    public void setUrl(String url) {
+    public void setUrl(String url, String voipCode) {
         this.url = url;
+        this.voipCode = voipCode;
     }
 
     private void collectData() {
-        while (isPlaying) {
+        int times = 0;
+        while (isPlaying && times < 3) {
+            times++;
             try {
                 PacketInfo packet = imMuxer.read();
                 if (packet == null) {
@@ -156,9 +172,9 @@ public class PullerTask {
                 }
                 if (packet.packetType == Constants.MSG_SEND_AUDIO) {
                     byte[] data = packet.body;
-                    byte[] newData = Arrays.copyOfRange(data, 1, data.length);
+                    byte[] newData = Arrays.copyOfRange(data, 0, data.length);
                     dataQueue.push(newData);
-                    Log.d(TAG, "接收到消息包：size=" + packet.bodySize + ", 队列 size =" + dataQueue.size());
+                    Log.d(TAG, "接收到消息包 times=" + times + "：size=" + packet.bodySize + ", 队列 size =" + dataQueue.size() + "，data=" + Arrays.toString(data));
                 }
             } catch (Exception e) {
                 Log.d(TAG, "接收消息异常：", e);

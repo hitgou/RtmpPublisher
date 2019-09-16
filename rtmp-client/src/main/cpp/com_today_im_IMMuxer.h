@@ -23,11 +23,11 @@ Java_com_today_im_IMMuxer_getSalt(JNIEnv *env, jobject instance) {
 
 JNIEXPORT jint JNICALL
 Java_com_today_im_IMMuxer_publish(JNIEnv *, jobject, jstring, jint,
-                                  jstring, jstring, jstring, jstring);
+                                  jstring, jstring, jstring, jstring, jstring);
 
 JNIEXPORT jint JNICALL
 Java_com_today_im_IMMuxer_pull(JNIEnv *, jobject, jstring, jint,
-                               jstring, jstring, jstring, jstring);
+                               jstring, jstring, jstring, jstring, jstring);
 
 
 JNIEXPORT jint JNICALL

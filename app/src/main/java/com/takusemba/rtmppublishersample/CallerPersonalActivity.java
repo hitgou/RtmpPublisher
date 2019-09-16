@@ -108,8 +108,12 @@ public class CallerPersonalActivity extends Activity implements PullerListener, 
     private PullerTask pullerTask;
     private Handler handler = new Handler();
     private Handler myHandler = new MyHandler();
+    private boolean isPublishing = false;
+    private boolean isPulling = false;
 
     private AudioManager audioManager;
+
+    private String voipCode = "791252931";
 
 //    private String publishUrl = "rtmp://47.106.33.6:9936/voip/1752648526";
 
@@ -177,7 +181,7 @@ public class CallerPersonalActivity extends Activity implements PullerListener, 
                 stopCallAndCallee();
                 break;
             case R.id.ll_callee_pickup: // 测试，固定位拨打 1
-                startPickup(this.did, "111", "1", "222", "2");
+                startPickup(this.did, this.caller, this.callerId, this.callee, this.calleeId);
                 break;
             case R.id.ll_hands_free:
                 setSpeakerphoneOn(!isSpeakerphoneOn);
@@ -275,11 +279,11 @@ public class CallerPersonalActivity extends Activity implements PullerListener, 
                             @Override
                             public void accept(@NonNull VoipObject accessPoint) throws Exception {
                                 if (accessPoint.getStatusCode() == 200) {
-                                    publisherTask.setUrl(accessPoint.getPushUri());
+                                    publisherTask.setUrl(accessPoint.getPushUri(), voipCode);
 //                                    publisherTask.setUrl(publishUrl);
                                     publisherTask.start();
 
-                                    pullerTask.setUrl(accessPoint.getSubUri());
+                                    pullerTask.setUrl(accessPoint.getSubUri(), voipCode);
                                     pullerTask.start();
                                 } else {
 
@@ -333,10 +337,10 @@ public class CallerPersonalActivity extends Activity implements PullerListener, 
                         new Consumer<VoipObject>() {
                             @Override
                             public void accept(@NonNull VoipObject accessPoint) throws Exception {
-                                publisherTask.setUrl(accessPoint.getPushUri());
+                                publisherTask.setUrl(accessPoint.getPushUri(), voipCode);
                                 publisherTask.start();
 
-                                pullerTask.setUrl(accessPoint.getSubUri());
+                                pullerTask.setUrl(accessPoint.getSubUri(), voipCode);
 //                                pullerTask.setUrl(publishUrl);
                                 pullerTask.start();
 
@@ -371,7 +375,10 @@ public class CallerPersonalActivity extends Activity implements PullerListener, 
     public void onPublishStopped() {
         stopCounting();
         updateControls();
-        finish();
+
+        if (!publisherTask.isPublishing() && !pullerTask.isPlaying()) {
+            finish();
+        }
     }
 
     @Override
@@ -399,7 +406,9 @@ public class CallerPersonalActivity extends Activity implements PullerListener, 
     public void onPullStopped() {
         stopCounting();
         updateControls();
-        finish();
+        if (!publisherTask.isPublishing() && !pullerTask.isPlaying()) {
+            finish();
+        }
     }
 
     @Override

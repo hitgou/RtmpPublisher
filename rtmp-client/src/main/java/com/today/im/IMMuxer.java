@@ -50,13 +50,13 @@ public class IMMuxer {
 
     public native void stopCalled();
 
-    public native int publish(String host, int port, String app, String path, String id, String md5);
+    public native int publish(String host, int port, String app, String path, String id, String md5, String voipCode);
 
     public native int publish1();
 
     public native void stopPublish();
 
-    public native int pull(String host, int port, String app, String path, String id, String md5);
+    public native int pull(String host, int port, String app, String path, String id, String md5, String voipCode);
 
 //    public native int publish();
 
@@ -73,6 +73,5 @@ public class IMMuxer {
     public native int isPullConnected();
 
     public native PacketInfo read();
-
 
 }

@@ -55,8 +55,6 @@ class PublishPullActivity() : AppCompatActivity(), PublisherListener, PullerList
         } else {
             publisherTask = PublisherTask(audioManager, this, url);
 
-            var url = "rtmp://47.106.33.6:9935/voip_relay/47.75.13.156-to-47.106.33.6-81";
-
             publishButton.setOnClickListener {
                 // 临时通话代码
                 val intent = Intent(this@PublishPullActivity, CallerPersonalActivity::class.java)
@@ -77,14 +75,14 @@ class PublishPullActivity() : AppCompatActivity(), PublisherListener, PullerList
 //                }
             }
 
-            pullerTask = PullerTask(audioManager, this, url)
+//            pullerTask = PullerTask(audioManager, this, url)
             pullButton.setOnClickListener {
                 val intent2 = Intent(this@PublishPullActivity, CallerPersonalActivity::class.java)
                 intent2.putExtra("callType", 2)
                 intent2.putExtra("caller", "aaa")
                 intent2.putExtra("callerId", "1")
-                intent2.putExtra("callee", "bbb")
-                intent2.putExtra("calleeId", "2")
+                intent2.putExtra("callee", "209038")
+                intent2.putExtra("calleeId", "209038")
                 startActivity(intent2)
 //                pullerTask.setUrl(url)
 ////                pullerTask.setUrl(tvPull.text.toString())

@@ -12,9 +12,9 @@
 #define FLV_TAG_HEAD_LEN 11
 #define FLV_PRE_TAG_LEN 4
 
-#define  LOG_TAG    "rtmp-muxer"
+//#define  LOG_TAG    "rtmp-muxer"
 
-#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+//#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
 static AVal av_onMetaData = AVC("onMetaData");
 static AVal av_duration = AVC("duration");
@@ -39,7 +39,7 @@ static uint64_t g_time_begin;
 
 //RTMP *rtmp;
 bool isMuted;
-char *voipCode = "776761258";
+char *voipCode;
 char *checkCodeData;
 float upLoadDataSize;
 float downLoadDataSize;
@@ -57,7 +57,8 @@ int pullCount;
 
 
 int publish(char *host, int port, char *app, char *path, char *guid,
-            char *md5) {
+            char *md5, char *voipCode_) {
+    voipCode = voipCode_;
     publishRTMP = RTMP_Alloc();
     if (publishRTMP == NULL) {
         return -1;
@@ -96,7 +97,8 @@ int publish(char *host, int port, char *app, char *path, char *guid,
     return 1;
 }
 
-int pull(char *host, int port, char *app, char *path, char *guid, char *md5) {
+int pull(char *host, int port, char *app, char *path, char *guid, char *md5, char *voipCode_) {
+    voipCode = voipCode_;
     pullRTMP = RTMP_Alloc();
     if (pullRTMP == NULL) {
         return -1;
@@ -160,6 +162,7 @@ void stopPublish() {
         RTMP_Free(publishRTMP);
         publishRTMP = NULL;
     }
+    checkCodeData = NULL;
 }
 
 int publishRtmpIsConnected() {
@@ -222,8 +225,9 @@ void stopPull() {
     if (pullRTMP) {
         RTMP_Close(pullRTMP);
         RTMP_Free(pullRTMP);
-//        pullRTMP = NULL;
+        pullRTMP = NULL;
     }
+    checkCodeData = NULL;
 }
 
 int pullRtmpIsConnected() {
@@ -317,31 +321,26 @@ char *newGUID() {
     return (const char *) buf;
 }
 
-char *dataWithHexString(char *voipCode1) {
+char *dataWithHexString() {
     int len = sizeof(voipCode);
     if (len == 0) return NULL;
-    char *buf = malloc(len);
-    if (!buf) return NULL;
 
     char *result = malloc(len / 2);
     unsigned char bytes;
     char str[3] = {'\0', '\0', '\0'};
     int i;
     for (i = 0; i < len / 2; i++) {
-        str[0] = buf[i * 2];
-        str[1] = buf[i * 2 + 1];
+        str[0] = voipCode[i * 2];
+        str[1] = voipCode[i * 2 + 1];
         bytes = strtol(str, NULL, 16);
-        memcpy(result, bytes, 1);
+        memcpy(result + i, &bytes, sizeof(char));
     }
-
-    free(buf);
     return result;
 }
 
-char *getCheckCodeData(char *data, int length) {
+char *getCheckCodeData() {
     if (!checkCodeData) {
-        char *data = dataWithHexString(voipCode);
-        checkCodeData = data;
+        checkCodeData = dataWithHexString();
     }
     return checkCodeData;
 }
@@ -349,18 +348,22 @@ char *getCheckCodeData(char *data, int length) {
 #define key_Length 4
 
 void checkCodeAudioData(char *audioData, int audioLength) {
-    char *keyData = getCheckCodeData(audioData, buffLen);
-
-    if (!audioLength && keyData && !keyData.length) {
+    char *keyData = getCheckCodeData();
+    if (!audioLength && keyData && !audioLength) {
         return;
     }
 
-    byte[] keyBytes = (Byte *)[keyData bytes];
-    for (long i = 0; i < audioLength; i++) {
-        // 算出当前位置字节，要和密钥的异或运算的密钥字节
+    __android_log_print(ANDROID_LOG_DEBUG, TAG, "hello native log");
+
+    LOGD("第一次异或编码");
+    long i = 0;
+    for (i = 0; i < audioLength; i++) {
         int l = i % key_Length;
-        char c = keyBytes[l];
-        // 异或运算
-        audioData[i] = (Byte) ((audioData[i]) ^ c);
+        char c = keyData[l];
+//        char c = 'a';
+        char s = audioData[i];
+        char result = s ^c;
+        audioData[i] = (Byte) result;
+//        LOGD("l=%d, c=%c, s=%c, result=%c, resultSecond=%c", l, c, s, result, resultSecond);
     }
 }
